@@ -1,4 +1,4 @@
-import { RuleEngine, EngineError, RequestError } from './engine.js?v=bc918a37258f';
+import { RuleEngine, EngineError, RequestError } from './engine.js?v=1f08ac66c1c3';
 import { deriveFilletGeometryStatus, deriveFilletLegLengthStatus, normalizeFilletGeometryPayload } from './geometry.js';
 
 export function createEvaluationService(library, config) {
@@ -90,6 +90,7 @@ export function createEvaluationService(library, config) {
   }
 
   function inspectionSide(criterion, payload, edition) {
+    if (payload.joint_type === 'fillet' && criterion.rule_id === 'IMP-000039') return 'root';
     const configured = criterion.side ?? 'auto';
     if (['face', 'root'].includes(configured)) return configured;
     const applicability = editionConfig(criterion.rule_id, edition).applicability;
@@ -186,7 +187,20 @@ export function createEvaluationService(library, config) {
         values.fillet_reinforcement_width_b = payload.geometry.b;
       }
       if (payload.joint_type === 'butt' && ruleId === 'IMP-000009') {
-        values.butt_reinforcement_width_b = payload.geometry.b;
+        values.butt_reinforcement_h = payload.geometry.hD;
+        values.butt_reinforcement_width_b = payload.geometry.bD;
+      }
+      if (payload.joint_type === 'butt' && ruleId === 'IMP-000011') {
+        values.root_reinforcement_h = payload.geometry.hW;
+        values.root_reinforcement_width_b = payload.geometry.bW;
+      }
+      if (payload.joint_type === 'butt' && ruleId === 'IMP-000038') {
+        values.misalignment_h = payload.geometry.hKV;
+        values.misalignment_variant = payload.geometry.misalignment_variant || values.misalignment_variant || '5071';
+      }
+      if (payload.joint_type === 'fillet' && ruleId === 'IMP-000039') {
+        if (payload.accessibility?.root) values.fitup_gap_h = payload.geometry.fitup_gap_h ?? 0;
+        else delete values.fitup_gap_h;
       }
       normalizeRuleValues(ruleId, values, payload);
 
