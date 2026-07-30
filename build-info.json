@@ -1,0 +1,33 @@
+{
+  "application": "Hardt-Wiehl Connect – Stumpfnahtbewertung",
+  "version": "0.3.0",
+  "app_target": "stumpfnaht",
+  "app_mode": "test",
+  "locked_joint_type": "butt",
+  "domain": "stumpfnaht.connect.hardt-wiehl.de",
+  "criteria": 21,
+  "library_version": "0.8 – Datenqualitätsaudit, Scope-Bereinigung und JSON-Exportvorbereitung",
+  "library_content_sha256": "f6d86d698e6dbcad27912cc67613572de9c9dd23cab168c59dcb0499963f6360",
+  "published_library_sha256": "1c1ef7b1b7dfa9376928091e0cbc51d64b888377e33c2b61ccee59680502d169",
+  "built_at": "2026-07-30T09:23:59.193Z",
+  "files": {
+    "assets/app.js": "0ca6d54775dcec16e983654c6ae4b05ae0b7d48a7b7c0ac8d3deabbf8e5211dc",
+    "assets/criterion-filter.js": "4a01de6ecc5f68246680f9986130f2364d5b4cf7eed43da211a08dac1574c649",
+    "assets/engine.js": "bc918a37258fb0957f2764366166d0071bdde9dabb11f0192172b9deae02c5cb",
+    "assets/evaluation.js": "fea4ea872f1abaf1a6c4eef6e8d680def035c2be4d9f269114ec9b21260b5bd8",
+    "assets/fillet-geometry-svg.js": "ab8ab806d448e1af33dd17df5b4998acce82ae6cfa4099a3d7c3f5d0d74673f3",
+    "assets/geometry.js": "bda6fb5469b707bcebddaec48fc9df74873f834d8366bb93aee9ce74b9c57bb1",
+    "assets/graphics/README.md": "6659ccf0c9cf99a9f2c9244184c546a2599f50604072523d5e00ece6b6930f96",
+    "assets/graphics/hero-industrial-hall.jpg": "d4a983a8d9f737bd28840bbe931217dd56afa5c0433061fc6006330cd5157038",
+    "assets/report-page.js": "8560960cf9eeb9f6556c2ab6cc665c911980ccb4a844f442a29326ea939e8019",
+    "assets/report.css": "e64c7efb1f9433066f3102360d00192cf6f89bc2d6e4f3f61c1f5abefe5f9413",
+    "assets/report.js": "7e2eaafd8c9f005c0b2137e1c09f93fc1009a1d9d0172c74d74f9ba7f6d63ecd",
+    "assets/result-format.js": "044d1e9cde1fd44944c338db6a2ff7335e49d274a1e7cf4b08d69751fcb696f3",
+    "assets/styles.css": "a4d04d851fb1532b254e620e363af8557a1b74e632512d4f5183ae46a4ca61d9",
+    "assets/target-lock.js": "a71e795a95a607ba7b5543a7048c2a7ee3300f345056454343e72e3be6e76541",
+    "data/rules.v1.json": "1c1ef7b1b7dfa9376928091e0cbc51d64b888377e33c2b61ccee59680502d169",
+    "data/rules.v1.json.gz": "48e0088eee2c4dea58c04fd7587828a603ad2afffc0a074ace05221105f7c21a",
+    "data/ui-config.json": "ec4c446332862a79ab2528d49f246c527f2af660ce858bbcefeaea771856a0a5",
+    "report.html": "be86d08fe0ded624b08c4a7ad868e805ed69ddc09c9c78ec6b6bc9f55d767e73"
+  }
+}
