@@ -268,6 +268,44 @@ body.production-mode .test-system-banner { display:none; }
   .result-card .rule-number { width:44px; height:44px; }
   .result-edition-row { padding:7px; }
 }
+
+
+/* UI-02: spaltenweise Prüfdaten und kompakte Messdatenerfassung */
+.general-data-grid { display:grid; grid-auto-flow:column; grid-template-rows:repeat(4,minmax(0,auto)); grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px 18px; align-items:start; }
+.general-data-grid > label,.general-data-grid > fieldset { min-width:0; }
+.compact-general-field { padding:10px 12px; }
+.compact-general-field legend { font-size:.84rem; }
+.general-data-grid .quality-selector { grid-template-columns:repeat(3,32px); gap:6px; }
+.general-data-grid .quality-selector span { min-height:30px; padding:4px 0; border-radius:8px; font-size:.9rem; }
+.general-data-grid .switch-row { padding:3px 0; gap:8px; }
+.general-data-grid .switch-row input { width:36px; height:20px; }
+.general-data-grid .switch-row input:after { width:14px; height:14px; }
+.general-data-grid .switch-row input:checked:after { transform:translateX(16px); }
+.joint-type-grid { grid-template-columns:1fr; margin-bottom:18px; }
+.joint-type-grid:has(fieldset[hidden]) { display:none; }
+.norm-comparison { margin-bottom:16px; padding:10px 14px; background:rgba(255,255,255,.68); }
+.norm-comparison .switch-row { padding:2px 0; }
+.report-notes-input { display:block; margin-top:18px; }
+.report-notes-input textarea { min-height:78px; resize:vertical; }
+.area-2 .geometry-layout { grid-template-columns:minmax(170px,.46fr) minmax(0,1.54fr) !important; gap:16px !important; max-width:none !important; margin:0 !important; align-items:stretch !important; }
+.geometry-measurements { display:flex; align-items:stretch; }
+.area-2 #geometry-fields { width:100%; grid-template-columns:1fr !important; align-content:space-evenly; gap:12px; }
+#geometry-fields .input-unit { max-width:7.5rem; }
+.area-2 .geometry-card { min-height:0; padding:10px; display:grid; }
+.area-2 .schematic { min-height:0 !important; height:100%; }
+.area-2 .schematic svg { width:100%; max-width:430px !important; max-height:340px; }
+
+@media (max-width:860px) {
+  .general-data-grid { grid-template-rows:repeat(6,minmax(0,auto)); grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .area-2 .geometry-layout { grid-template-columns:minmax(160px,.55fr) minmax(0,1.45fr) !important; }
+}
+@media (max-width:620px) {
+  .general-data-grid { grid-auto-flow:row; grid-template-rows:none; grid-template-columns:1fr; }
+  .area-2 .geometry-layout { grid-template-columns:1fr !important; }
+  .area-2 #geometry-fields { grid-template-columns:1fr !important; }
+  #geometry-fields .input-unit { max-width:9rem; }
+  .area-2 .schematic svg { max-height:none; }
+}
 /* Paket 4: harmonisiertes technisches Farbkonzept und CAD-Banner */
 :root {
   --navy:#263746;

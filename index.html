@@ -8,7 +8,7 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>Stumpfnahtbewertung | Hardt-Wiehl Connect</title>
-  <link rel="stylesheet" href="./assets/styles.css?v=a4d04d851fb1">
+  <link rel="stylesheet" href="./assets/styles.css?v=19cefddf840c">
 </head>
 <body>
 <div class="test-system-banner" id="test-system-banner"><strong>TESTSYSTEM</strong><span>Bewertungen und Berichte sind noch nicht zur produktiven Verwendung freigegeben.</span></div>
@@ -38,58 +38,48 @@
   <section class="panel step-panel area-1" id="inspection-header" data-panel="1">
     <div class="section-heading"><div><span class="eyebrow">Bereich 1</span><h2>Allgemeine Prüfdaten und Anforderung</h2></div></div>
 
-    <div class="choice-grid compact">
+    <div class="choice-grid joint-type-grid">
       <fieldset>
-        <legend>Normvergleich</legend>
-        <label class="switch-row"><input id="compare_2014" type="checkbox" checked><span>Ausgabe 2014 zusätzlich auswerten</span></label>
-        <p class="field-help">Die Ausgabe 2023 bleibt maßgebend; 2014 wird vergleichend dargestellt.</p>
+        <legend>Nahtart</legend>
+        <label class="choice-card"><input type="radio" name="joint_type" value="fillet"><span class="choice-icon fillet-icon"></span><span><strong>Kehlnaht</strong><small>Geometrie mit a, aA, z1, z2 und m</small></span></label>
+        <label class="choice-card"><input type="radio" name="joint_type" value="butt" checked><span class="choice-icon butt-icon"></span><span><strong>Stumpfnaht</strong><small>Geometrie mit t, s und b</small></span></label>
       </fieldset>
-      <fieldset>
+    </div>
+
+    <div class="general-data-grid">
+      <label>Prüfort<input id="location" placeholder="Werkstatt / Baustelle"></label>
+      <label>Berichtsnummer<input id="report_id" value="EMP-2026-001"></label>
+      <label>Prüfer<input id="inspector" placeholder="Name"></label>
+      <label>Prüfdatum<input id="inspection_date" type="date"></label>
+      <label>Bauteil<input id="component" placeholder="z. B. Konsole K-17"></label>
+      <label>WPS-Nr.<input id="wps" placeholder="z. B. WPS-135-FW-S355-08 Rev. 03"></label>
+      <label>Bauteildicke t1<div class="input-unit"><input id="geo-t1" type="number" min="0.5" step="0.1" value="8.0"><span>mm</span></div></label>
+      <label>Bauteildicke t2<div class="input-unit"><input id="geo-t2" type="number" min="0.5" step="0.1" value="8.0"><span>mm</span></div></label>
+      <label id="general-angle-field">Eingeschlossener Bauteilwinkel γ<div class="input-unit"><input id="geo-angle" type="number" min="60" max="120" step="1" value="90"><span>°</span></div></label>
+      <label id="general-a-field">Nenn-Kehlnahtdicke a<div class="input-unit"><input id="geo-a" type="number" min="0.1" step="0.1" value="5.0"><span>mm</span></div></label>
+      <fieldset class="compact-general-field">
         <legend>SOLL-Bewertungsgruppe</legend>
         <div class="quality-selector">
           <label><input type="radio" name="required_quality" value="B" checked><span>B</span></label>
           <label><input type="radio" name="required_quality" value="C"><span>C</span></label>
           <label><input type="radio" name="required_quality" value="D"><span>D</span></label>
         </div>
-        <p class="field-help">Die IST-Gruppe wird für jedes Kriterium separat berechnet.</p>
       </fieldset>
-    </div>
-
-    <div class="choice-grid">
-      <fieldset>
-        <legend>Nahtart</legend>
-        <label class="choice-card"><input type="radio" name="joint_type" value="fillet"><span class="choice-icon fillet-icon"></span><span><strong>Kehlnaht</strong><small>Geometrie mit a, aA, z1, z2 und m</small></span></label>
-        <label class="choice-card"><input type="radio" name="joint_type" value="butt" checked><span class="choice-icon butt-icon"></span><span><strong>Stumpfnaht</strong><small>Geometrie mit t, s und b</small></span></label>
-      </fieldset>
-      <fieldset>
+      <fieldset class="compact-general-field">
         <legend>Zugänglichkeit</legend>
         <label class="switch-row"><input id="access_face" type="checkbox" checked><span>Deckseite zugänglich</span></label>
         <label class="switch-row"><input id="access_root" type="checkbox"><span>Wurzelseite zugänglich</span></label>
       </fieldset>
     </div>
-
-    <div class="form-grid report-grid">
-      <label>WPS<input id="wps" placeholder="z. B. WPS-135-FW-S355-08 Rev. 03"></label>
-      <label>Berichtsnummer<input id="report_id" value="EMP-2026-001"></label>
-      <label>Prüfdatum<input id="inspection_date" type="date"></label>
-      <label>Bauteil<input id="component" placeholder="z. B. Konsole K-17"></label>
-      <label>Nahtbezeichnung<input id="weld_id" placeholder="z. B. FW-01"></label>
-      <label>Prüfer<input id="inspector" placeholder="Name"></label>
-      <label>Prüfort<input id="location" placeholder="Werkstatt / Baustelle"></label>
-      <label>Bauteildicke t<div class="input-unit"><input id="geo-t" type="number" min="0.5" step="0.1" value="8.0"><span>mm</span></div></label>
-      <label id="general-a-field">Nenn-Kehlnahtdicke a<div class="input-unit"><input id="geo-a" type="number" min="0.1" step="0.1" value="5.0"><span>mm</span></div></label>
-      <label id="general-angle-field">Eingeschlossener Bauteilwinkel γ<div class="input-unit"><input id="geo-angle" type="number" min="60" max="120" step="1" value="90"><span>°</span></div></label>
-    </div>
-    <label class="full-width">Bemerkungen<textarea id="notes" rows="3" placeholder="Optionaler Kommentar zum Nahtabschnitt"></textarea></label>
   </section>
 
   <section class="panel step-panel area-2" id="base-geometry" data-panel="2">
     <div class="section-heading"><div><span class="eyebrow">Bereich 2</span><h2>Messdatenerfassung</h2></div></div>
     <div class="geometry-layout">
+      <div class="geometry-measurements"><div class="form-grid" id="geometry-fields"></div></div>
       <div class="geometry-card">
         <div class="schematic" id="geometry-schematic"></div>
       </div>
-      <div><div class="form-grid" id="geometry-fields"></div></div>
     </div>
   </section>
 
@@ -100,18 +90,25 @@
   </section>
 
   <section class="panel step-panel area-4 evaluation-neutral" id="evaluation-result" data-panel="4">
+    <fieldset class="norm-comparison">
+      <legend>Normvergleich</legend>
+      <label class="switch-row"><input id="compare_2014" type="checkbox" checked><span>Ausgabe 2014 zusätzlich auswerten</span></label>
+    </fieldset>
     <div class="result-hero" id="result-summary">
       <div><span class="eyebrow">Bereich 4</span><h2>Bewertung noch nicht vollständig</h2><p>Die Bewertung aktualisiert sich automatisch nach jeder Eingabe.</p></div>
     </div>
     <div id="results-list" class="results-list"></div>
+    <label class="report-notes-input">Bemerkungen
+      <textarea id="report_notes" rows="3" maxlength="600" placeholder="Optionaler Hinweis für den Bericht"></textarea>
+    </label>
     <div class="result-actions result-actions-bottom"><button class="primary" id="download-pdf" disabled>pdf-Bericht</button></div>
   </section>
 </main>
 
 <footer class="site-footer"><span id="footer-library">Regelbibliothek wird geladen...</span><span>stumpfnaht.connect.hardt-wiehl.de</span></footer>
 <noscript><div class="alert">JavaScript ist für die lokale Bewertung erforderlich.</div></noscript>
-<script type="module" src="./assets/target-lock.js?v=a71e795a95a6"></script>
-<script type="module" src="./assets/app.js?v=0ca6d54775dc"></script>
+<script type="module" src="./assets/target-lock.js?v=f0f768a8f797"></script>
+<script type="module" src="./assets/app.js?v=c69988244c49"></script>
 <script type="module" src="./assets/criterion-filter.js?v=4a01de6ecc5f"></script>
 </body>
 </html>

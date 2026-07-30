@@ -1,7 +1,7 @@
-import { createEvaluationService } from './evaluation.js?v=fea4ea872f1a';
+import { createEvaluationService } from './evaluation.js?v=11a0c04fbffe';
 import { openReport } from './report.js?v=7e2eaafd8c9f';
-import { computeFilletGeometry, computeFilletNominalMeasurements, GEOMETRY_TOLERANCE_MM } from './geometry.js?v=bda6fb5469b7';
-import { filletGeometrySvg } from './fillet-geometry-svg.js?v=ab8ab806d448';
+import { computeFilletGeometry, computeFilletNominalMeasurements, GEOMETRY_TOLERANCE_MM } from './geometry.js?v=5d8f886d07c1';
+import { filletGeometrySvg } from './fillet-geometry-svg.js?v=d81e353709bc';
 
 const state = {
   config: null,
@@ -100,6 +100,18 @@ function geometryValue(id) {
   return element ? element.value : '';
 }
 
+function parentThicknessValues() {
+  return {
+    t1: numberOrNull(geometryValue('t1')),
+    t2: numberOrNull(geometryValue('t2')),
+  };
+}
+
+function governingParentThickness() {
+  const values = Object.values(parentThicknessValues()).filter(Number.isFinite);
+  return values.length ? Math.min(...values) : null;
+}
+
 function filletGeometryInput() {
   return {
     z1: numberOrNull(geometryValue('z1')),
@@ -183,7 +195,7 @@ function refreshGeometry({schedule = true} = {}) {
   if (schedule) scheduleLiveEvaluation();
 }
 
-const FILLET_MEASUREMENT_IDS = ['z1', 'z2', 'm'];
+const FILLET_MEASUREMENT_IDS = ['z2', 'm', 'z1'];
 
 function nominalFilletMeasurementValues() {
   const target = computeFilletNominalMeasurements(
@@ -231,15 +243,15 @@ function renderGeometryFields() {
   captureFilletMeasurementValues(container);
   syncAutomaticFilletMeasurements({refresh:false});
   const fields = type === 'butt' ? [
-    {id:'s', label:'Gemessene Nahtdicke s', unit:'mm', value:existing.s || '8.0', min:.1, step:.1},
-    {id:'b', label:'Gemessene Nahtbreite b', unit:'mm', value:existing.b || '', min:.1, step:.1},
+    {id:'s', label:'Gemessene Nahtdicke s', unit:'mm', value:existing.s || '8.0', min:.1, max:99.9, step:.1},
+    {id:'b', label:'Gemessene Nahtbreite b', unit:'mm', value:existing.b || '', min:.1, max:99.9, step:.1},
   ] : [
-    {id:'z1', label:'Schenkellänge z1', unit:'mm', value:state.filletMeasurements.values.z1, min:.1, step:.1, valueMode:state.filletMeasurements.automatic.z1 ? 'automatic' : 'manual'},
-    {id:'z2', label:'Schenkellänge z2', unit:'mm', value:state.filletMeasurements.values.z2, min:.1, step:.1, valueMode:state.filletMeasurements.automatic.z2 ? 'automatic' : 'manual'},
-    {id:'m', label:'Höhenmesswert m bei γ/2', unit:'mm', value:state.filletMeasurements.values.m, min:0, step:.1, valueMode:state.filletMeasurements.automatic.m ? 'automatic' : 'manual'},
+    {id:'z2', label:'Schenkellänge z2', unit:'mm', value:state.filletMeasurements.values.z2, min:.1, max:99.9, step:.1, valueMode:state.filletMeasurements.automatic.z2 ? 'automatic' : 'manual'},
+    {id:'m', label:'Höhenmesswert m bei γ/2', unit:'mm', value:state.filletMeasurements.values.m, min:0, max:99.9, step:.1, valueMode:state.filletMeasurements.automatic.m ? 'automatic' : 'manual'},
+    {id:'z1', label:'Schenkellänge z1', unit:'mm', value:state.filletMeasurements.values.z1, min:.1, max:99.9, step:.1, valueMode:state.filletMeasurements.automatic.z1 ? 'automatic' : 'manual'},
   ];
   container.innerHTML = fields.map(field => `<label ${field.wrapperId ? `id="${field.wrapperId}"` : ''} class="${field.hidden ? 'hidden' : ''}">${escapeHtml(field.label)}
-    <div class="input-unit"><input id="geo-${field.id}" type="number" min="${field.min}" step="${field.step}" value="${escapeHtml(field.value)}" ${field.valueMode ? `data-value-mode="${field.valueMode}"` : ''} ${field.readonly ? 'readonly' : ''}><span>${escapeHtml(field.unit)}</span></div>
+    <div class="input-unit"><input id="geo-${field.id}" type="number" min="${field.min}" max="${field.max}" step="${field.step}" value="${escapeHtml(field.value)}" ${field.valueMode ? `data-value-mode="${field.valueMode}"` : ''} ${field.readonly ? 'readonly' : ''}><span>${escapeHtml(field.unit)}</span></div>
   </label>`).join('');
   $$('[id^="geo-"]', container).forEach(input => {
     if (input.readOnly) return;
@@ -463,17 +475,21 @@ function collectPayload() {
     criteria[ruleId] = {values, required_quality: override || null};
   });
   const g = state.geometry;
+  const thickness = parentThicknessValues();
   const undercutValues = criteria['IMP-000007']?.values ?? {};
   return {
     report: {
       report_id: $('#report_id').value.trim(), inspection_date: $('#inspection_date').value,
-      wps: $('#wps').value.trim(), component: $('#component').value.trim(), weld_id: $('#weld_id').value.trim(),
-      inspector: $('#inspector').value.trim(), location: $('#location').value.trim(), notes: $('#notes').value.trim()
+      wps: $('#wps').value.trim(), component: $('#component').value.trim(),
+      inspector: $('#inspector').value.trim(), location: $('#location').value.trim(),
+      notes: $('#report_notes').value.trim()
     },
     joint_type: jointType(), required_quality: requiredQuality(),
     accessibility: {face: $('#access_face').checked, root: $('#access_root').checked},
     geometry: {
-      t: numberOrNull(geometryValue('t')),
+      t: governingParentThickness(),
+      t1: thickness.t1,
+      t2: thickness.t2,
       s: numberOrNull(geometryValue('s')),
       a: numberOrNull(geometryValue('a')),
       aA: jointType() === 'fillet' ? g?.aA ?? null : null,
@@ -506,8 +522,9 @@ function frontendValidation() {
   refreshGeometry({schedule:false});
   const errors = [];
   if (!$('#access_face').checked && !$('#access_root').checked) errors.push('Mindestens eine Prüfseite muss zugänglich sein.');
-  const t = numberOrNull(geometryValue('t'));
-  if (t === null || t < .5) errors.push('Bauteildicke t muss mindestens 0,5 mm betragen.');
+  const {t1, t2} = parentThicknessValues();
+  if (t1 === null || t1 < .5) errors.push('Bauteildicke t1 muss mindestens 0,5 mm betragen.');
+  if (t2 === null || t2 < .5) errors.push('Bauteildicke t2 muss mindestens 0,5 mm betragen.');
   if (jointType() === 'butt') {
     const s = numberOrNull(geometryValue('s'));
     const b = numberOrNull(geometryValue('b'));
@@ -642,7 +659,14 @@ function downloadPdf() {
   button.disabled = true;
   button.textContent = 'Bericht wird geöffnet …';
   try {
-    openReport(state.lastResult, state.config);
+    const reportData = {
+      ...state.lastResult,
+      report: {
+        ...(state.lastResult.report || {}),
+        notes: $('#report_notes').value.trim(),
+      },
+    };
+    openReport(reportData, state.config);
   } catch (error) {
     showAlert(String(error.message || error).split('\n'));
   } finally {
@@ -659,13 +683,16 @@ function bindStaticInputs() {
   }));
   $('#geo-angle').addEventListener('input', () => syncAutomaticFilletMeasurements());
   $('#geo-a').addEventListener('input', () => syncAutomaticFilletMeasurements());
-  $('#geo-t').addEventListener('input', () => { updateConditionalFields(); scheduleLiveEvaluation(); });
+  ['#geo-t1','#geo-t2'].forEach(selector => $(selector).addEventListener('input', () => {
+    updateConditionalFields();
+    scheduleLiveEvaluation();
+  }));
   $('#compare_2014').addEventListener('change', () => scheduleLiveEvaluation());
   $('#access_face').addEventListener('change', () => { renderCriteria(); scheduleLiveEvaluation(); });
   $('#access_root').addEventListener('change', () => { renderCriteria(); scheduleLiveEvaluation(); });
   $('#download-pdf').addEventListener('click', downloadPdf);
   $$('.step[data-target]').forEach(step => step.addEventListener('click', () => document.getElementById(step.dataset.target)?.scrollIntoView({behavior:'smooth', block:'start'})));
-  ['#report_id','#inspection_date','#wps','#component','#weld_id','#inspector','#location','#notes'].forEach(selector => {
+  ['#report_id','#inspection_date','#wps','#component','#inspector','#location','#report_notes'].forEach(selector => {
     $(selector)?.addEventListener('input', () => {
       if (state.lastResult) scheduleLiveEvaluation(450);
     });

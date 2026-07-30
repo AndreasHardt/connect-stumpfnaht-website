@@ -1,5 +1,5 @@
 import { RuleEngine, EngineError, RequestError } from './engine.js?v=bc918a37258f';
-import { deriveFilletGeometryStatus, normalizeFilletGeometryPayload } from './geometry.js';
+import { deriveFilletGeometryStatus, deriveFilletLegLengthStatus, normalizeFilletGeometryPayload } from './geometry.js';
 
 export function createEvaluationService(library, config) {
   const engine = new RuleEngine(library);
@@ -239,7 +239,17 @@ export function createEvaluationService(library, config) {
         },
       },
     };
-    return deriveFilletGeometryStatus(evaluateEdition(dimensionalPayload, 2023));
+    const criterionStatus = deriveFilletGeometryStatus(evaluateEdition(dimensionalPayload, 2023));
+    const legLengthStatus = deriveFilletLegLengthStatus(payload.geometry);
+    return {
+      ...criterionStatus,
+      status: criterionStatus.status === 'fail' || legLengthStatus.status === 'fail'
+        ? 'fail'
+        : criterionStatus.status === 'pass' && legLengthStatus.status === 'pass'
+          ? 'pass'
+          : 'incomplete',
+      leg_length_status: legLengthStatus,
+    };
   }
 
   function evaluatePayload(payload) {

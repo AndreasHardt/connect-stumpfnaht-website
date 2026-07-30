@@ -34,6 +34,34 @@ function finiteNonNegative(value) {
   return Number.isFinite(value) && value >= 0;
 }
 
+export function deriveFilletLegLengthStatus(source = {}) {
+  const nominal = computeFilletNominalMeasurements(source.a, source.gamma);
+  const measured = {
+    z1: Number(source.z1),
+    z2: Number(source.z2),
+  };
+  if (!nominal.valid || !Number.isFinite(measured.z1) || !Number.isFinite(measured.z2)) {
+    return {status: 'incomplete', nominal: {z1: null, z2: null}, measured};
+  }
+
+  // Die UI erfasst und zeigt z1/z2 mit einer Dezimalstelle. Deshalb muss
+  // dieselbe sichtbare Genauigkeit auch für die Mindestprüfung gelten.
+  const target = {
+    z1: Number(nominal.z1.toFixed(1)),
+    z2: Number(nominal.z2.toFixed(1)),
+  };
+  const measurementStatuses = {
+    z1: measured.z1 >= target.z1 ? 'pass' : 'fail',
+    z2: measured.z2 >= target.z2 ? 'pass' : 'fail',
+  };
+  return {
+    status: Object.values(measurementStatuses).includes('fail') ? 'fail' : 'pass',
+    nominal: target,
+    measured,
+    measurement_statuses: measurementStatuses,
+  };
+}
+
 export function computeFilletNominalMeasurements(nominalA, gamma) {
   const a = Number(nominalA);
   const angle = Number(gamma);

@@ -5,7 +5,7 @@ import {
   assessmentText,
   statusLabel,
 } from './result-format.js?v=044d1e9cde1f';
-import { filletGeometrySvg } from './fillet-geometry-svg.js?v=ab8ab806d448';
+import { filletGeometrySvg } from './fillet-geometry-svg.js?v=d81e353709bc';
 
 const inspectionLabels = {
   complete: 'vollständig',
@@ -44,22 +44,25 @@ function degree(value) {
 }
 
 function geometryRows(geometry, jointType) {
+  const t1 = geometry.t1 ?? geometry.t;
+  const t2 = geometry.t2;
   if (jointType === 'Stumpfnaht') {
-    return `<tr><td>Bauteildicke t</td><td>${mm(geometry.t)}</td><td>Gemessene Nahtdicke s</td><td>${mm(geometry.s)}</td></tr>
-      <tr><td>Gemessene Nahtbreite b</td><td>${mm(geometry.b)}</td><td></td><td></td></tr>`;
+    return `<tr><td>Bauteildicke t1</td><td>${mm(t1)}</td><td>Bauteildicke t2</td><td>${mm(t2)}</td></tr>
+      <tr><td>Gemessene Nahtdicke s</td><td>${mm(geometry.s)}</td><td>Gemessene Nahtbreite b</td><td>${mm(geometry.b)}</td></tr>`;
   }
   const profile = profileLabels[geometry.profile_class] || '—';
   const source = aASourceLabels[geometry.aA_source] || '—';
   const geometryStatus = geometryStatusLabels[geometry.geometry_status?.status] || geometryStatusLabels.incomplete;
-  return `<tr><td>Bauteildicke t</td><td>${mm(geometry.t)}</td><td>Nenn-Kehlnahtdicke a</td><td>${mm(geometry.a)}</td></tr>
-    <tr><td>Bauteilwinkel γ</td><td>${degree(geometry.gamma)}</td><td>Messtechnische Toleranz</td><td>${mm(geometry.tolerance_mm)}</td></tr>
-    <tr><td>Schenkellänge z1</td><td>${mm(geometry.z1)}</td><td>Schenkellänge z2</td><td>${mm(geometry.z2)}</td></tr>
-    <tr><td>Höhenmesswert m</td><td>${mm(geometry.m)}</td><td>Vergleichshöhe m0</td><td>${mm(geometry.m0)}</td></tr>
+  return `<tr><td>Bauteildicke t1</td><td>${mm(t1)}</td><td>Bauteildicke t2</td><td>${mm(t2)}</td></tr>
+    <tr><td>Nenn-Kehlnahtdicke a</td><td>${mm(geometry.a)}</td><td>Bauteilwinkel γ</td><td>${degree(geometry.gamma)}</td></tr>
+    <tr><td>Schenkellänge z2</td><td>${mm(geometry.z2)}</td><td>Höhenmesswert m</td><td>${mm(geometry.m)}</td></tr>
+    <tr><td>Schenkellänge z1</td><td>${mm(geometry.z1)}</td><td>Vergleichshöhe m0</td><td>${mm(geometry.m0)}</td></tr>
     <tr><td>Nahtbreite b</td><td>${mm(geometry.b)}</td><td>Schenkelbezogene Kehlnahtdicke az</td><td>${mm(geometry.az)}</td></tr>
     <tr><td>Profilabweichung</td><td>${escapeHtml(profile)} | ${mm(geometry.profile_h)}</td><td>Ungleichschenkligkeit hz</td><td>${mm(geometry.asymmetry_h)}</td></tr>
     <tr><td>Tatsächliche Kehlnahtdicke aA</td><td>${mm(geometry.aA)}</td><td>Ermittlungsart</td><td>${escapeHtml(source)}</td></tr>
     <tr><td>Direkt gemessenes aA</td><td>${mm(geometry.direct_aA)}</td><td>Direkt gemessene Überhöhung h</td><td>${mm(geometry.direct_h)}</td></tr>
-    <tr><td>Geometriestatus aus Nr. 1.10, 1.16, 1.20 und 1.21</td><td>${escapeHtml(geometryStatus)}</td><td>Messlinie</td><td>Wurzelpunkt bis m auf der Winkelhalbierenden</td></tr>
+    <tr><td>Messtechnische Toleranz</td><td>${mm(geometry.tolerance_mm)}</td><td>Geometriestatus aus Nr. 1.10, 1.16, 1.20 und 1.21</td><td>${escapeHtml(geometryStatus)}</td></tr>
+    <tr><td>Messlinie</td><td>Wurzelpunkt bis m auf der Winkelhalbierenden</td><td></td><td></td></tr>
     <tr><td>Einbrandkerbe 1 an Bauteil 1 (horizontal, z1)</td><td>${mm(geometry.notch1)}</td><td>Einbrandkerbe 2 an Bauteil 2 (senkrecht/abgewinkelt, z2)</td><td>${mm(geometry.notch2)}</td></tr>`;
 }
 
@@ -86,34 +89,37 @@ function statusText(item) {
   return `<span class="status-text ${escapeHtml(item.status)}">${escapeHtml(assessmentText(item))}</span>`;
 }
 
-function resultRows(result, otherResult) {
+function resultRows(result, otherResult, edition) {
+  const otherEdition = edition === 2023 ? 2014 : 2023;
   const otherById = Object.fromEntries((otherResult?.results || []).map(item => [item.rule_id, item]));
   return (result?.results || []).map(item => {
     const other = otherById[item.rule_id];
+    const formula = item.formula
+      ? `<div class="small"><strong>Berechnung:</strong> ${escapeHtml(item.formula)}</div>`
+      : '';
+    const comparisonStatus = other
+      ? `<div class="status-line comparison-status"><strong>${otherEdition}</strong>${statusText(other)}</div>`
+      : '';
     return `<tr>
       <td>${escapeHtml(item.table_no)}</td>
-      <td><strong>${escapeHtml(item.name)}</strong><div class="small">${escapeHtml(item.ui?.section || '')}</div></td>
-      <td>${item.formula ? escapeHtml(item.formula) : '—'}</td>
+      <td><strong>${escapeHtml(item.name)}</strong><div class="small">${escapeHtml(item.ui?.section || '')}</div>${formula}</td>
       <td>${escapeHtml(requirementText(item))}</td>
       <td>${escapeHtml(actualText(item))}</td>
       <td>${messagesText(item)}</td>
-      <td>${statusText(item)}</td>
-      <td class="secondary-status">${statusText(other)}</td>
+      <td><div class="status-line"><strong>${edition}</strong>${statusText(item)}</div>${comparisonStatus}</td>
     </tr>`;
   }).join('');
 }
-
 function reportHeader(report, access, result, edition, config, today) {
   return `<header><div class="brand">${escapeHtml(config.title)}</div><div class="subtitle">${escapeHtml(config.subtitle)}</div><div class="meta">${escapeHtml(config.platform || 'Hardt-Wiehl Connect')} | ${escapeHtml(config.domain)}</div></header>
     <h1>${edition === 2023 ? 'Bericht nach DIN EN ISO 5817:2023' : 'Vergleichsbericht nach DIN EN ISO 5817:2014'}</h1>
     ${edition === 2014 ? '<div class="legacy-notice"><strong>Vergleich nach älterer Normausgabe.</strong> Maßgebend bleibt die Ausgabe 2023.</div>' : ''}
     <table class="info">
-      <tr><td>Berichtsnummer</td><td>${escapeHtml(report.report_id || '—')}</td><td>Prüfdatum</td><td>${escapeHtml(report.inspection_date || today)}</td></tr>
-      <tr><td>WPS</td><td>${escapeHtml(report.wps || '—')}</td><td>Bauteil</td><td>${escapeHtml(report.component || '—')}</td></tr>
-      <tr><td>Nahtbezeichnung</td><td>${escapeHtml(report.weld_id || '—')}</td><td>Prüfer</td><td>${escapeHtml(report.inspector || '—')}</td></tr>
-      <tr><td>Prüfort</td><td>${escapeHtml(report.location || '—')}</td><td>Nahtart</td><td>${escapeHtml(result.joint_type)}</td></tr>
-      <tr><td>Normausgabe</td><td>DIN EN ISO 5817:${edition}</td><td>SOLL</td><td>${escapeHtml(result.required_quality)}</td></tr>
-      <tr><td>Zugänglichkeit</td><td colspan="3">Deckseite: ${access.face ? 'ja' : 'nein'}; Wurzelseite: ${access.root ? 'ja' : 'nein'}</td></tr>
+      <tr><td>Prüfort</td><td>${escapeHtml(report.location || '—')}</td><td>Berichtsnummer</td><td>${escapeHtml(report.report_id || '—')}</td></tr>
+      <tr><td>Prüfer</td><td>${escapeHtml(report.inspector || '—')}</td><td>Prüfdatum</td><td>${escapeHtml(report.inspection_date || today)}</td></tr>
+      <tr><td>Bauteil</td><td>${escapeHtml(report.component || '—')}</td><td>WPS-Nr.</td><td>${escapeHtml(report.wps || '—')}</td></tr>
+      <tr><td>Nahtart</td><td>${escapeHtml(result.joint_type)}</td><td>Normausgabe</td><td>DIN EN ISO 5817:${edition}</td></tr>
+      <tr><td>SOLL-Bewertungsgruppe</td><td>${escapeHtml(result.required_quality)}</td><td>Zugänglichkeit</td><td>Deckseite: ${access.face ? 'ja' : 'nein'}; Wurzelseite: ${access.root ? 'ja' : 'nein'}</td></tr>
     </table>
     <div class="summary"><div><strong>Prüfstatus</strong><span>${escapeHtml(inspectionLabels[result.inspection_status] || result.inspection_status)}</span></div><div><strong>Gesamtergebnis</strong><span>${escapeHtml(statusLabel(result.status))}</span></div><div><strong>Bewertung</strong><span>${escapeHtml(result.achieved_quality ? `${result.achieved_quality} erreicht` : statusLabel(result.status))}</span></div></div>`;
 }
@@ -131,11 +137,13 @@ function reportSection({ edition, result, otherResult, report, geometry, access,
     <h2>Vorgaben, Messung und Berechnung</h2><table class="info">${geometryRows(geometry, result.joint_type)}</table>
     ${geometryFigure(geometry, result.joint_type)}
     ${combinedNotice}
+    <div class="report-results">
     <h2>Einzelergebnisse – Ausgabe ${edition}</h2>
-    <div class="table-context">SOLL bezeichnet die Anforderung, IST den festgestellten Befund oder Messwert. Die letzte Spalte zeigt den direkten Vergleich zur Ausgabe ${edition === 2023 ? 2014 : 2023}.</div>
-    <table class="result-table"><thead><tr><th>Nr.</th><th>Kriterium</th><th>Berechnungsgrundlage</th><th>SOLL</th><th>IST</th><th>Bemerkung</th><th>Status ${edition}</th><th class="secondary-status">Status ${edition === 2023 ? 2014 : 2023}</th></tr></thead><tbody>${resultRows(result, otherResult)}</tbody></table>
-    ${report.notes ? `<h2>Bemerkungen zum Nahtabschnitt</h2><div class="note">${escapeHtml(report.notes)}</div>` : ''}
-    <div class="signature"><div>Prüfer / Datum</div><div>Freigabe / Datum</div></div>
+    <div class="table-context">SOLL bezeichnet die Anforderung, IST den festgestellten Befund oder Messwert. Berechnungsgrundlage und Normvergleich sind kompakt in Kriterium beziehungsweise Status zusammengeführt.</div>
+    <table class="result-table"><thead><tr><th>Nr.</th><th>Kriterium / Berechnungsgrundlage</th><th>SOLL</th><th>IST</th><th>Bemerkung</th><th>Status</th></tr></thead><tbody>${resultRows(result, otherResult, edition)}</tbody></table>
+    ${report.notes ? `<h2 class="report-notes-title">Bemerkungen</h2><div class="report-notes">${escapeHtml(report.notes)}</div>` : ''}
+    <div class="signature"><div><span class="signature-line"></span><div><strong>Prüfer:</strong> ${escapeHtml(report.inspector || '—')} <strong>Datum:</strong> ${escapeHtml(today)}</div></div></div>
+    </div>
     <div class="report-actions"><button class="print" type="button" data-print-edition="${edition}">Bericht ${edition} drucken</button></div>
     </div></section>`;
 }
@@ -157,7 +165,7 @@ function renderReport(payload) {
   const geometry = data.geometry || {};
   const access = data.accessibility || {};
   const isTest = (data.app_mode || config.app_mode) !== 'production';
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Intl.DateTimeFormat('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'}).format(new Date());
   document.title = report.report_id || 'ISO5817-Prüfbericht';
   document.querySelector('#reports').innerHTML =
     reportSection({ edition: 2023, result: primary, otherResult: comparison, report, geometry, access, config, today, isTest })
