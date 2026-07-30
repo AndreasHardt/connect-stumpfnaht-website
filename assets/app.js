@@ -1,7 +1,8 @@
-import { createEvaluationService } from './evaluation.js?v=612061532ad7';
-import { openReport } from './report.js?v=7e2eaafd8c9f';
-import { computeFilletGeometry, computeFilletNominalMeasurements, GEOMETRY_TOLERANCE_MM } from './geometry.js?v=5d8f886d07c1';
-import { filletGeometrySvg } from './fillet-geometry-svg.js?v=24fff081d78e';
+import { createEvaluationService } from './evaluation.js?v=35f3a22547ca';
+import { openReport } from './report.js?v=3bb13ece4d8a';
+import { computeFilletGeometry, computeFilletNominalMeasurements, GEOMETRY_TOLERANCE_MM } from './geometry.js?v=efeb2ab95e9b';
+import { filletGeometrySvg } from './fillet-geometry-svg.js?v=151dab4563de';
+import { buttGeometrySvg } from './butt-geometry-svg.js';
 
 const state = {
   config: null,
@@ -173,9 +174,20 @@ function updateFilletGeometryStatus(status) {
 function refreshGeometry({schedule = true} = {}) {
   if (jointType() !== 'fillet') {
     state.geometry = null;
-    $('#geometry-schematic').innerHTML = jointSvg('butt');
+    $('#geometry-schematic').innerHTML = buttGeometrySvg({
+      t1: numberOrNull(geometryValue('t1')),
+      t2: numberOrNull(geometryValue('t2')),
+      hKV: numberOrNull(geometryValue('hKV')),
+      bD: numberOrNull(geometryValue('bD')),
+      hD: numberOrNull(geometryValue('hD')),
+      bW: numberOrNull(geometryValue('bW')),
+      hW: numberOrNull(geometryValue('hW')),
+    }, {
+      face: $('#access_face').checked,
+      root: $('#access_root').checked,
+    });
     const summary = $('#geometry-formula');
-    if (summary) summary.innerHTML = '<strong>Stumpfnaht:</strong><br>Nahtdicke s und Breite b werden am Nahtabschnitt gemessen. Die Breite b wird für die Bewertung der Decklagenüberhöhung verwendet.';
+    if (summary) summary.innerHTML = '<strong>Stumpfnaht im I-Stoß:</strong><br>Kantenversatz, Decklagen- und Wurzelkontur werden aus den zentralen Messwerten dargestellt. Gestrichelte Konturen kennzeichnen nicht zugängliche und daher nur schematisch dargestellte Seiten.';
     updateConditionalFields();
     if (schedule) scheduleLiveEvaluation();
     return;
@@ -243,14 +255,18 @@ function renderGeometryFields() {
   captureFilletMeasurementValues(container);
   syncAutomaticFilletMeasurements({refresh:false});
   const fields = type === 'butt' ? [
-    {id:'s', label:'Gemessene Nahtdicke s', unit:'mm', value:existing.s || '8.0', min:.1, max:99.9, step:.1},
-    {id:'b', label:'Gemessene Nahtbreite b', unit:'mm', value:existing.b || '', min:.1, max:99.9, step:.1},
+    {id:'hKV', label:'Kantenversatz hKV (t2 höher)', unit:'mm', value:existing.hKV || '0.0', min:0, max:99.9, step:.1},
+    {id:'bD', label:'Breite der Nahtüberhöhung – Deckseite bD', unit:'mm', value:existing.bD || '10.0', min:.1, max:99.9, step:.1, hidden:!$('#access_face').checked, accessSide:'face'},
+    {id:'hD', label:'Nahtüberhöhung – Deckseite hD', unit:'mm', value:existing.hD || '1.0', min:0, max:99.9, step:.1, hidden:!$('#access_face').checked, accessSide:'face'},
+    {id:'bW', label:'Breite der Wurzelüberhöhung – Wurzelseite bW', unit:'mm', value:existing.bW || '6.0', min:.1, max:99.9, step:.1, hidden:!$('#access_root').checked, accessSide:'root'},
+    {id:'hW', label:'Wurzelüberhöhung – Wurzelseite hW', unit:'mm', value:existing.hW || '0.8', min:0, max:99.9, step:.1, hidden:!$('#access_root').checked, accessSide:'root'},
   ] : [
     {id:'z2', label:'Schenkellänge z2', unit:'mm', value:state.filletMeasurements.values.z2, min:.1, max:99.9, step:.1, valueMode:state.filletMeasurements.automatic.z2 ? 'automatic' : 'manual'},
     {id:'m', label:'Höhenmesswert m bei γ/2', unit:'mm', value:state.filletMeasurements.values.m, min:0, max:99.9, step:.1, valueMode:state.filletMeasurements.automatic.m ? 'automatic' : 'manual'},
     {id:'z1', label:'Schenkellänge z1', unit:'mm', value:state.filletMeasurements.values.z1, min:.1, max:99.9, step:.1, valueMode:state.filletMeasurements.automatic.z1 ? 'automatic' : 'manual'},
+    {id:'gap-h', label:'Spalt h', unit:'mm', value:existing['gap-h'] || '0.0', min:0, max:99.9, step:.1, hidden:!$('#access_root').checked, accessSide:'root'},
   ];
-  container.innerHTML = fields.map(field => `<label ${field.wrapperId ? `id="${field.wrapperId}"` : ''} class="${field.hidden ? 'hidden' : ''}">${escapeHtml(field.label)}
+  container.innerHTML = fields.map(field => `<label ${field.wrapperId ? `id="${field.wrapperId}"` : ''} class="${field.hidden ? 'hidden' : ''}" ${field.accessSide ? `data-access-measurement="${field.accessSide}"` : ''}>${escapeHtml(field.label)}
     <div class="input-unit"><input id="geo-${field.id}" type="number" min="${field.min}" max="${field.max}" step="${field.step}" value="${escapeHtml(field.value)}" ${field.valueMode ? `data-value-mode="${field.valueMode}"` : ''} ${field.readonly ? 'readonly' : ''}><span>${escapeHtml(field.unit)}</span></div>
   </label>`).join('');
   $$('[id^="geo-"]', container).forEach(input => {
@@ -273,6 +289,10 @@ function updateJointVisuals() {
   $('#geometry-schematic').innerHTML = type === 'butt' ? jointSvg(type) : '';
   $('#general-a-field')?.classList.toggle('hidden', type !== 'fillet');
   $('#general-angle-field')?.classList.toggle('hidden', type !== 'fillet');
+  $('#general-s-field')?.classList.toggle('hidden', type !== 'butt');
+  $('#general-misalignment-variant-field')?.classList.toggle('hidden', type !== 'butt');
+  $('#access-face-field')?.classList.toggle('hidden', type === 'fillet');
+  if (type === 'fillet') $('#access_face').checked = true;
   renderGeometryFields();
   renderCriteria();
   scheduleLiveEvaluation();
@@ -280,12 +300,18 @@ function updateJointVisuals() {
 
 function hiddenSystemField(ruleId, fieldId) {
   return (ruleId === 'IMP-000010' && ['fillet_reinforcement_h','fillet_reinforcement_width_b'].includes(fieldId))
-    || (ruleId === 'IMP-000009' && fieldId === 'butt_reinforcement_width_b');
+    || (ruleId === 'IMP-000009' && ['butt_reinforcement_h','butt_reinforcement_width_b'].includes(fieldId))
+    || (ruleId === 'IMP-000011' && ['root_reinforcement_h','root_reinforcement_width_b'].includes(fieldId))
+    || (ruleId === 'IMP-000038' && ['misalignment_h','misalignment_variant'].includes(fieldId))
+    || (ruleId === 'IMP-000039' && fieldId === 'fitup_gap_h');
 }
 
 function criterionSystemNote(ruleId) {
   if (ruleId === 'IMP-000010') return 'Überhöhung h und Breite b werden aus der Kehlnahtgeometrie übernommen.';
-  if (ruleId === 'IMP-000009') return 'Die Nahtbreite b wird aus der Messdatenerfassung übernommen.';
+  if (ruleId === 'IMP-000009') return 'Breite bD und Überhöhung hD werden aus der Messdatenerfassung übernommen.';
+  if (ruleId === 'IMP-000011') return 'Breite bW und Wurzelüberhöhung hW werden aus der Messdatenerfassung übernommen.';
+  if (ruleId === 'IMP-000038') return 'Kantenversatz hKV und Bauteilvariante werden aus den allgemeinen Messdaten übernommen.';
+  if (ruleId === 'IMP-000039') return 'Der Spalt h wird bei zugänglicher Wurzelseite aus der Messdatenerfassung übernommen.';
   return '';
 }
 
@@ -320,6 +346,7 @@ function fieldHtml(ruleId, field, quality = requiredQuality()) {
 }
 
 function criterionAvailable(item) {
+  if (item.rule_id === 'IMP-000039' && jointType() === 'fillet') return $('#access_root').checked;
   if (item.side === 'face') return $('#access_face').checked;
   if (item.side === 'root') return $('#access_root').checked;
   return $('#access_face').checked || $('#access_root').checked;
@@ -412,7 +439,13 @@ function renderCriteria() {
 function systemCriterionValue(ruleId, fieldId) {
   if (ruleId === 'IMP-000010' && fieldId === 'fillet_reinforcement_h') return state.geometry?.reinforcementH;
   if (ruleId === 'IMP-000010' && fieldId === 'fillet_reinforcement_width_b') return state.geometry?.b;
-  if (ruleId === 'IMP-000009' && fieldId === 'butt_reinforcement_width_b') return numberOrNull(geometryValue('b'));
+  if (ruleId === 'IMP-000009' && fieldId === 'butt_reinforcement_h') return numberOrNull(geometryValue('hD'));
+  if (ruleId === 'IMP-000009' && fieldId === 'butt_reinforcement_width_b') return numberOrNull(geometryValue('bD'));
+  if (ruleId === 'IMP-000011' && fieldId === 'root_reinforcement_h') return numberOrNull(geometryValue('hW'));
+  if (ruleId === 'IMP-000011' && fieldId === 'root_reinforcement_width_b') return numberOrNull(geometryValue('bW'));
+  if (ruleId === 'IMP-000038' && fieldId === 'misalignment_h') return numberOrNull(geometryValue('hKV'));
+  if (ruleId === 'IMP-000038' && fieldId === 'misalignment_variant') return $('#misalignment-variant')?.value || '5071';
+  if (ruleId === 'IMP-000039' && fieldId === 'fitup_gap_h') return numberOrNull(geometryValue('gap-h'));
   return null;
 }
 
@@ -454,7 +487,21 @@ function systemValuesForCriterion(ruleId) {
       fillet_reinforcement_width_b: state.geometry?.b,
     };
   }
-  if (ruleId === 'IMP-000009') return {butt_reinforcement_width_b: numberOrNull(geometryValue('b'))};
+  if (ruleId === 'IMP-000009') return {
+    butt_reinforcement_h: numberOrNull(geometryValue('hD')),
+    butt_reinforcement_width_b: numberOrNull(geometryValue('bD')),
+  };
+  if (ruleId === 'IMP-000011') return {
+    root_reinforcement_h: numberOrNull(geometryValue('hW')),
+    root_reinforcement_width_b: numberOrNull(geometryValue('bW')),
+  };
+  if (ruleId === 'IMP-000038') return {
+    misalignment_h: numberOrNull(geometryValue('hKV')),
+    misalignment_variant: $('#misalignment-variant')?.value || '5071',
+  };
+  if (ruleId === 'IMP-000039') return {
+    fitup_gap_h: $('#access_root').checked ? numberOrNull(geometryValue('gap-h')) : null,
+  };
   return {};
 }
 
@@ -497,7 +544,14 @@ function collectPayload() {
       z2: numberOrNull(geometryValue('z2')),
       gamma: numberOrNull(geometryValue('angle')),
       m: numberOrNull(geometryValue('m')),
-      b: jointType() === 'fillet' ? g?.b ?? null : numberOrNull(geometryValue('b')),
+      b: jointType() === 'fillet' ? g?.b ?? null : numberOrNull(geometryValue('bD')),
+      hKV: numberOrNull(geometryValue('hKV')),
+      bD: numberOrNull(geometryValue('bD')),
+      hD: numberOrNull(geometryValue('hD')),
+      bW: numberOrNull(geometryValue('bW')),
+      hW: numberOrNull(geometryValue('hW')),
+      fitup_gap_h: jointType() === 'fillet' && $('#access_root').checked ? numberOrNull(geometryValue('gap-h')) : null,
+      misalignment_variant: $('#misalignment-variant')?.value || null,
       az: g?.az ?? null,
       m0: g?.m0 ?? null,
       delta_m: g?.deltaM ?? null,
@@ -527,9 +581,17 @@ function frontendValidation() {
   if (t2 === null || t2 < .5) errors.push('Bauteildicke t2 muss mindestens 0,5 mm betragen.');
   if (jointType() === 'butt') {
     const s = numberOrNull(geometryValue('s'));
-    const b = numberOrNull(geometryValue('b'));
-    if (s === null || s <= 0) errors.push('Gemessene Nahtdicke s ist erforderlich.');
-    if (b === null || b <= 0) errors.push('Gemessene Nahtbreite b ist erforderlich.');
+    const hKV = numberOrNull(geometryValue('hKV'));
+    if (s === null || s <= 0) errors.push('Nahtdicke s als Konstruktions- oder Expertenwert ist erforderlich.');
+    if (hKV === null || hKV < 0) errors.push('Kantenversatz hKV ist erforderlich.');
+    if ($('#access_face').checked) {
+      if (!(numberOrNull(geometryValue('bD')) > 0)) errors.push('Breite der Nahtüberhöhung bD ist erforderlich.');
+      if (numberOrNull(geometryValue('hD')) === null) errors.push('Nahtüberhöhung hD ist erforderlich.');
+    }
+    if ($('#access_root').checked) {
+      if (!(numberOrNull(geometryValue('bW')) > 0)) errors.push('Breite der Wurzelüberhöhung bW ist erforderlich.');
+      if (numberOrNull(geometryValue('hW')) === null) errors.push('Wurzelüberhöhung hW ist erforderlich.');
+    }
   } else {
     const a = numberOrNull(geometryValue('a'));
     if (a === null || a <= 0) errors.push('Nenn-Kehlnahtdicke a muss größer als 0 mm sein.');
@@ -683,13 +745,14 @@ function bindStaticInputs() {
   }));
   $('#geo-angle').addEventListener('input', () => syncAutomaticFilletMeasurements());
   $('#geo-a').addEventListener('input', () => syncAutomaticFilletMeasurements());
-  ['#geo-t1','#geo-t2'].forEach(selector => $(selector).addEventListener('input', () => {
+  ['#geo-t1','#geo-t2','#geo-s'].forEach(selector => $(selector)?.addEventListener('input', () => {
     updateConditionalFields();
-    scheduleLiveEvaluation();
+    refreshGeometry();
   }));
   $('#compare_2014').addEventListener('change', () => scheduleLiveEvaluation());
-  $('#access_face').addEventListener('change', () => { renderCriteria(); scheduleLiveEvaluation(); });
-  $('#access_root').addEventListener('change', () => { renderCriteria(); scheduleLiveEvaluation(); });
+  $('#access_face').addEventListener('change', () => { renderGeometryFields(); renderCriteria(); scheduleLiveEvaluation(); });
+  $('#access_root').addEventListener('change', () => { renderGeometryFields(); renderCriteria(); scheduleLiveEvaluation(); });
+  $('#misalignment-variant')?.addEventListener('change', () => scheduleLiveEvaluation());
   $('#download-pdf').addEventListener('click', downloadPdf);
   $$('.step[data-target]').forEach(step => step.addEventListener('click', () => document.getElementById(step.dataset.target)?.scrollIntoView({behavior:'smooth', block:'start'})));
   ['#report_id','#inspection_date','#wps','#component','#inspector','#location','#report_notes'].forEach(selector => {
@@ -701,7 +764,8 @@ function bindStaticInputs() {
 
 async function init() {
   $('#inspection_date').value = new Date().toISOString().slice(0,10);
-  $('#compare_2014').checked = true;
+  $('#compare_2014').checked = false;
+  $('#access_root').checked = true;
   try {
     const [configResponse, libraryResponse] = await Promise.all([
       fetch('./data/ui-config.json', {cache: 'no-store'}),
@@ -733,15 +797,21 @@ import {
   actualText as formatActual,
   assessmentText as formatAssessment,
   detailsText as formatDetails,
-} from './result-format.js?v=044d1e9cde1f';
+} from './result-format.js?v=7e3ce3ad26d3';
 
-function renderEditionResultRow(item, edition) {
+function resultDiffers(primary, comparison) {
+  return Boolean(comparison)
+    && (primary.status !== comparison.status || primary.achieved_quality !== comparison.achieved_quality);
+}
+
+function renderEditionResultRow(item, edition, differs = false) {
   if (!item) return '';
-  return `<div class="result-edition-row edition-${edition}">
+  return `<div class="result-edition-row edition-${edition} ${differs ? 'norm-result-difference' : ''}">
     <div class="edition-label">${edition}</div>
     <div class="result-value"><small>SOLL</small><strong>${escapeHtml(formatRequirement(item))}</strong></div>
     <div class="result-value"><small>IST</small><strong>${escapeHtml(formatActual(item))}</strong></div>
     <div class="result-value result-assessment ${escapeHtml(item.status)}"><small>Bewertung</small><strong>${escapeHtml(formatAssessment(item))}</strong></div>
+    ${differs ? '<div class="norm-difference-note">Anderes Ergebnis nach DIN EN ISO 5817:2014</div>' : ''}
   </div>`;
 }
 
@@ -770,13 +840,14 @@ renderResults = function renderResultsSemantic(data) {
   const comparisonById = Object.fromEntries((data.comparison?.results || []).map(item => [item.rule_id, item]));
   $('#results-list').innerHTML = primary.results.map(item => {
     const comparison = comparisonById[item.rule_id];
+    const differs = resultDiffers(item, comparison);
     return `<article class="result-card panel result-status-${escapeHtml(item.status)}">
       <div class="rule-number">${escapeHtml(item.table_no)}</div>
       <div class="result-card-content">
         <h3>${escapeHtml(item.name)}</h3>
         <div class="result-editions">
           ${renderEditionResultRow(item, '2023')}
-          ${renderEditionResultRow(comparison, '2014')}
+          ${renderEditionResultRow(comparison, '2014', differs)}
         </div>
         ${renderResultDetails(item, comparison)}
       </div>
@@ -795,42 +866,3 @@ if (footerLibrary) {
   new MutationObserver(() => normalizeVisibleSeparators()).observe(footerLibrary, { childList: true, characterData: true, subtree: true });
   normalizeVisibleSeparators();
 }
-
-// Ergänzung des vollständigen UI-Codes um Modellbeschriftungen und die Headergrafik.
-aASourceLabels.model = 'aus der interpolierten Modellkontur';
-
-function applyModelFieldLabels() {
-  const labels = {
-    'geo-z1': 'Messwert z1 am Übergang Bauteil 1',
-    'geo-z2': 'Messwert z2 am Übergang Bauteil 2',
-    'geo-notch1': 'Einbrandkerbe 1 an Bauteil 1',
-    'geo-notch2': 'Einbrandkerbe 2 an Bauteil 2',
-    'geo-aA': 'Modellierte tatsächliche Kehlnahtdicke aA',
-  };
-  Object.entries(labels).forEach(([id, text]) => {
-    const input = document.getElementById(id);
-    const label = input?.closest('label');
-    if (!label) return;
-    const firstTextNode = [...label.childNodes].find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
-    if (firstTextNode) firstTextNode.textContent = `${text}\n    `;
-  });
-  document.getElementById('direct-h-field')?.classList.add('hidden');
-  document.getElementById('direct-aA-field')?.classList.add('hidden');
-}
-
-function ensureHeaderGraphic() {
-  const target = document.getElementById('joint-illustration');
-  if (!target) return;
-  target.style.display = 'grid';
-  target.style.minHeight = '120px';
-  target.style.backgroundImage = `url("${new URL('./graphics/header.svg', import.meta.url)}")`;
-  target.style.backgroundPosition = 'center';
-  target.style.backgroundRepeat = 'no-repeat';
-  target.style.backgroundSize = 'contain';
-}
-
-queueMicrotask(() => {
-  ensureHeaderGraphic();
-  applyModelFieldLabels();
-  refreshGeometry({schedule:false});
-});
