@@ -1,10 +1,36 @@
 const state = { measurementOnly: false };
+const centralRules = {
+  fillet: new Set(['IMP-000010', 'IMP-000016', 'IMP-000020', 'IMP-000021', 'IMP-000039']),
+  butt: new Set(['IMP-000009', 'IMP-000011', 'IMP-000038']),
+};
+
+function activeJointType() {
+  return document.documentElement.dataset.appTarget === 'stumpfnaht'
+    ? 'butt'
+    : document.documentElement.dataset.appTarget === 'kehlnaht'
+      ? 'fillet'
+      : document.querySelector('input[name="joint_type"]:checked')?.value || 'fillet';
+}
+
+function filterLabel() {
+  return activeJointType() === 'fillet'
+    ? 'Nur die von Z1, Z2, m und h abhängigen Prüfkriterien anzeigen'
+    : 'Nur die von hKV, bD, hD, bW und hW abhängigen Prüfkriterien anzeigen';
+}
 
 function classifyCards() {
   document.querySelectorAll('[data-criterion]').forEach(card => {
-    const hasNumericInput = Boolean(card.querySelector('[data-input-id][type="number"]'));
-    const calculatedFromGeometry = Boolean(card.querySelector('.calculated-note'));
-    const measurementRelevant = hasNumericInput || calculatedFromGeometry;
+    const type = activeJointType();
+    let measurementRelevant = centralRules[type].has(card.dataset.criterion);
+    if (type === 'fillet' && card.dataset.criterion === 'IMP-000039') {
+      measurementRelevant = measurementRelevant && Boolean(document.querySelector('#access_root')?.checked);
+    }
+    if (type === 'butt' && card.dataset.criterion === 'IMP-000009') {
+      measurementRelevant = measurementRelevant && Boolean(document.querySelector('#access_face')?.checked);
+    }
+    if (type === 'butt' && card.dataset.criterion === 'IMP-000011') {
+      measurementRelevant = measurementRelevant && Boolean(document.querySelector('#access_root')?.checked);
+    }
     card.dataset.measurementRelevant = measurementRelevant ? 'true' : 'false';
   });
 }
@@ -21,7 +47,7 @@ function applyFilter() {
   const button = document.querySelector('#toggle-measurement-only');
   if (button) {
     button.setAttribute('aria-pressed', String(state.measurementOnly));
-    button.textContent = state.measurementOnly ? 'Alle Kriterien anzeigen' : 'Nur messwertabhängige Kriterien anzeigen';
+    button.textContent = state.measurementOnly ? 'Alle Kriterien anzeigen' : filterLabel();
   }
 }
 
@@ -33,7 +59,7 @@ function ensureButton() {
   button.className = 'secondary';
   button.id = 'toggle-measurement-only';
   button.setAttribute('aria-pressed', 'false');
-  button.textContent = 'Nur messwertabhängige Kriterien anzeigen';
+  button.textContent = filterLabel();
   button.addEventListener('click', () => {
     state.measurementOnly = !state.measurementOnly;
     applyFilter();
@@ -49,4 +75,7 @@ function refresh() {
 const criteriaList = document.querySelector('#criteria-list');
 if (criteriaList) new MutationObserver(refresh).observe(criteriaList, { childList: true, subtree: true });
 document.addEventListener('DOMContentLoaded', refresh);
+document.querySelector('#access_face')?.addEventListener('change', refresh);
+document.querySelector('#access_root')?.addEventListener('change', refresh);
+document.querySelectorAll('input[name="joint_type"]').forEach(input => input.addEventListener('change', refresh));
 refresh();
