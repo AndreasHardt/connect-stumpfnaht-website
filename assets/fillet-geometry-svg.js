@@ -1,4 +1,4 @@
-import { computeFilletNominalMeasurements } from './geometry.js?v=5d8f886d07c1';
+import { computeFilletNominalMeasurements } from './geometry.js?v=efeb2ab95e9b';
 
 function finiteNumber(value) {
   const parsed = Number(value);
@@ -143,3 +143,4 @@ export function filletGeometrySvg(geometry, nominalA, geometryStatus = 'incomple
     ${penetrationPath}
   </svg>`;
 }
+
