@@ -42,7 +42,10 @@ export function createEvaluationService(library, config) {
       values.smaller_thickness_t = Number(g.t);
     }
     if (g.s !== null && g.s !== undefined && g.s !== '') values.weld_thickness_s = Number(g.s);
-    if (g.a !== null && g.a !== undefined && g.a !== '') values.required_throat_a = Number(g.a);
+    if (g.a !== null && g.a !== undefined && g.a !== '') {
+      values.required_throat_a = Number(g.a);
+      values.throat_a = Number(g.a);
+    }
     if (g.aA !== null && g.aA !== undefined && g.aA !== '') {
       values.actual_throat_aA = Number(g.aA);
       values.actual_throat = Number(g.aA);

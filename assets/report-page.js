@@ -5,7 +5,7 @@ import {
   assessmentText,
   statusLabel,
 } from './result-format.js?v=044d1e9cde1f';
-import { filletGeometrySvg } from './fillet-geometry-svg.js?v=d81e353709bc';
+import { filletGeometrySvg } from './fillet-geometry-svg.js?v=24fff081d78e';
 
 const inspectionLabels = {
   complete: 'vollständig',
