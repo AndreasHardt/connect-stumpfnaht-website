@@ -26,6 +26,17 @@ jobs:
         with:
           ref: main
 
+      - name: Zugriffstoken prüfen
+        env:
+          CONNECT_CODE_TOKEN: ${{ secrets.CONNECT_CODE_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$CONNECT_CODE_TOKEN" ]; then
+            echo "::error::Repository-Secret CONNECT_CODE_TOKEN fehlt oder ist leer."
+            exit 1
+          fi
+
       - name: Privates Connect-Repository lesen
         uses: actions/checkout@v4
         with:
