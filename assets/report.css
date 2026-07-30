@@ -39,6 +39,8 @@ th,td{border:1px solid var(--line);padding:2.5px 3px;vertical-align:top}
 .status-line>strong{color:var(--muted)}
 .status-line+.status-line{margin-top:2px;padding-top:2px;border-top:1px solid var(--line)}
 .comparison-status{background:#edf0f2}
+.norm-result-difference{margin-top:4px;padding:4px 5px;border-left:3px solid #c78518;background:#fff4d9}
+.norm-difference-note{display:block;margin-left:4px;color:#8a5600;font-size:7.5pt;font-weight:700}
 .status-text{font-weight:700}.status-text.pass{color:var(--green)}.status-text.fail{color:var(--red)}.status-text.manual_review,.status-text.incomplete{color:var(--amber)}.status-text.not_applicable,.status-text.not_assessable{color:var(--grey)}
 .small{font-size:5.1pt;color:var(--muted);margin-top:1px}
 .note,.test-notice,.legacy-notice,.table-context{border-left:3px solid var(--blue);background:var(--pale);padding:4px 6px;margin:5px 0}
