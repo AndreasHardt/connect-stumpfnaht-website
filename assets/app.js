@@ -1,7 +1,7 @@
 import { createEvaluationService } from './evaluation.js?v=35f3a22547ca';
 import { openReport } from './report.js?v=7e2eaafd8c9f';
 import { computeFilletGeometry, computeFilletNominalMeasurements, GEOMETRY_TOLERANCE_MM } from './geometry.js?v=5d8f886d07c1';
-import { filletGeometrySvg } from './fillet-geometry-svg.js?v=d9fdfae0a349';
+import { filletGeometrySvg } from './fillet-geometry-svg.js?v=d7a8dbf377ac';
 import { buttGeometrySvg } from './butt-geometry-svg.js';
 
 const state = {
@@ -282,10 +282,10 @@ function renderGeometryFields() {
   captureFilletMeasurementValues(container);
   syncAutomaticFilletMeasurements({refresh:false});
   const fields = type === 'butt' ? [
-    {id:'hKV', label:'Kantenversatz hKV (T2 höher)', unit:'mm', value:existing.hKV || '0.0', min:0, max:99.9, step:.1},
-    {id:'bD', label:'Breite Decklage', unit:'mm', value:existing.bD || '10.0', min:.1, max:99.9, step:.1, hidden:!$('#access_face').checked, accessSide:'face'},
     {id:'hD', label:'Decklagenüberhöhung', unit:'mm', value:existing.hD || '1.0', min:0, max:99.9, step:.1, hidden:!$('#access_face').checked, accessSide:'face'},
-    {id:'bW', label:'Breite Wurzel', unit:'mm', value:existing.bW || '6.0', min:.1, max:99.9, step:.1, hidden:!$('#access_root').checked, accessSide:'root'},
+    {id:'bD', label:'Decklagenbreite', unit:'mm', value:existing.bD || '10.0', min:.1, max:99.9, step:.1, hidden:!$('#access_face').checked, accessSide:'face'},
+    {id:'hKV', label:'Kantenversatz', unit:'mm', value:existing.hKV || '0.0', min:0, max:99.9, step:.1},
+    {id:'bW', label:'Wurzelbreite', unit:'mm', value:existing.bW || '6.0', min:.1, max:99.9, step:.1, hidden:!$('#access_root').checked, accessSide:'root'},
     {id:'hW', label:'Wurzelüberhöhung', unit:'mm', value:existing.hW || '0.8', min:0, max:99.9, step:.1, hidden:!$('#access_root').checked, accessSide:'root'},
   ] : [
     {id:'z2', label:'Schenkellänge z2', unit:'mm', value:state.filletMeasurements.values.z2, min:.1, max:99.9, step:.1, valueMode:state.filletMeasurements.automatic.z2 ? 'automatic' : 'manual'},
@@ -604,8 +604,8 @@ function frontendValidation() {
   const errors = [];
   if (!$('#access_face').checked && !$('#access_root').checked) errors.push('Mindestens eine Prüfseite muss zugänglich sein.');
   const {t1, t2} = parentThicknessValues();
-  if (t1 === null || t1 < .5) errors.push('Bauteildicke t1 muss mindestens 0,5 mm betragen.');
-  if (t2 === null || t2 < .5) errors.push('Bauteildicke t2 muss mindestens 0,5 mm betragen.');
+  if (t1 === null || t1 < 3 || t1 > 30) errors.push('Bauteildicke t1 muss zwischen 3 und 30 mm liegen.');
+  if (t2 === null || t2 < 3 || t2 > 30) errors.push('Bauteildicke t2 muss zwischen 3 und 30 mm liegen.');
   if (jointType() === 'butt') {
     const s = numberOrNull(geometryValue('s'));
     const hKV = numberOrNull(geometryValue('hKV'));
