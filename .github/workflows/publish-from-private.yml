@@ -12,7 +12,7 @@ concurrency:
 
 env:
   PUBLISH_TARGET: stumpfnaht
-  EXPECTED_DOMAIN: stumpfnaht.connect.hardt-wiehl.de
+  EXPECTED_DOMAIN: stumpfnaht.hardt-wiehl.de
   APP_MODE: test
 
 jobs:
