@@ -100,4 +100,3 @@ export function detailsText(item) {
   if (item.formula) details.push(`Formel: ${item.formula}`);
   return details;
 }
-

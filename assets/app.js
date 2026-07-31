@@ -1,7 +1,7 @@
 import { createEvaluationService } from './evaluation.js?v=35f3a22547ca';
-import { openReport } from './report.js?v=3bb13ece4d8a';
-import { computeFilletGeometry, computeFilletNominalMeasurements, GEOMETRY_TOLERANCE_MM } from './geometry.js?v=efeb2ab95e9b';
-import { filletGeometrySvg } from './fillet-geometry-svg.js?v=151dab4563de';
+import { openReport } from './report.js?v=7e2eaafd8c9f';
+import { computeFilletGeometry, computeFilletNominalMeasurements, GEOMETRY_TOLERANCE_MM } from './geometry.js?v=5d8f886d07c1';
+import { filletGeometrySvg } from './fillet-geometry-svg.js?v=24fff081d78e';
 import { buttGeometrySvg } from './butt-geometry-svg.js';
 
 const state = {
@@ -797,7 +797,7 @@ import {
   actualText as formatActual,
   assessmentText as formatAssessment,
   detailsText as formatDetails,
-} from './result-format.js?v=7e3ce3ad26d3';
+} from './result-format.js?v=044d1e9cde1f';
 
 function resultDiffers(primary, comparison) {
   return Boolean(comparison)
@@ -866,3 +866,42 @@ if (footerLibrary) {
   new MutationObserver(() => normalizeVisibleSeparators()).observe(footerLibrary, { childList: true, characterData: true, subtree: true });
   normalizeVisibleSeparators();
 }
+
+// Ergänzung des vollständigen UI-Codes um Modellbeschriftungen und die Headergrafik.
+aASourceLabels.model = 'aus der interpolierten Modellkontur';
+
+function applyModelFieldLabels() {
+  const labels = {
+    'geo-z1': 'Messwert z1 am Übergang Bauteil 1',
+    'geo-z2': 'Messwert z2 am Übergang Bauteil 2',
+    'geo-notch1': 'Einbrandkerbe 1 an Bauteil 1',
+    'geo-notch2': 'Einbrandkerbe 2 an Bauteil 2',
+    'geo-aA': 'Modellierte tatsächliche Kehlnahtdicke aA',
+  };
+  Object.entries(labels).forEach(([id, text]) => {
+    const input = document.getElementById(id);
+    const label = input?.closest('label');
+    if (!label) return;
+    const firstTextNode = [...label.childNodes].find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+    if (firstTextNode) firstTextNode.textContent = `${text}\n    `;
+  });
+  document.getElementById('direct-h-field')?.classList.add('hidden');
+  document.getElementById('direct-aA-field')?.classList.add('hidden');
+}
+
+function ensureHeaderGraphic() {
+  const target = document.getElementById('joint-illustration');
+  if (!target) return;
+  target.style.display = 'grid';
+  target.style.minHeight = '120px';
+  target.style.backgroundImage = `url("${new URL('./graphics/header.svg', import.meta.url)}")`;
+  target.style.backgroundPosition = 'center';
+  target.style.backgroundRepeat = 'no-repeat';
+  target.style.backgroundSize = 'contain';
+}
+
+queueMicrotask(() => {
+  ensureHeaderGraphic();
+  applyModelFieldLabels();
+  refreshGeometry({schedule:false});
+});

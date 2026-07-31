@@ -4,8 +4,8 @@ import {
   actualText,
   assessmentText,
   statusLabel,
-} from './result-format.js?v=7e3ce3ad26d3';
-import { filletGeometrySvg } from './fillet-geometry-svg.js?v=151dab4563de';
+} from './result-format.js?v=044d1e9cde1f';
+import { filletGeometrySvg } from './fillet-geometry-svg.js?v=24fff081d78e';
 import { buttGeometrySvg } from './butt-geometry-svg.js';
 
 const inspectionLabels = {

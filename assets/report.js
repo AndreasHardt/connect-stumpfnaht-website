@@ -19,4 +19,3 @@ export function openReport(data, config) {
   }
   reportWindow.focus();
 }
-
