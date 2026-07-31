@@ -2,7 +2,7 @@ import { createEvaluationService } from './evaluation.js?v=35f3a22547ca';
 import { openReport } from './report.js?v=7e2eaafd8c9f';
 import { computeFilletGeometry, computeFilletNominalMeasurements, GEOMETRY_TOLERANCE_MM } from './geometry.js?v=5d8f886d07c1';
 import { filletGeometrySvg } from './fillet-geometry-svg.js?v=d7a8dbf377ac';
-import { buttGeometrySvg } from './butt-geometry-svg.js';
+import { buttGeometrySvg } from './butt-geometry-svg.js?v=fc4fa8f283a2';
 
 const state = {
   config: null,
@@ -56,6 +56,27 @@ function formatNumber(value) {
 }
 function formatMm(value) {
   return Number.isFinite(Number(value)) ? `${formatNumber(value)} mm` : '—';
+}
+
+const OPTIONAL_REPORT_FIELD_IDS = [
+  'manufacturer', 'inspection_organization', 'customer', 'project',
+  'component_number', 'weld_number', 'inspection_position', 'drawing_number', 'drawing_revision',
+  'material_t1', 'material_t2', 'welding_process', 'wps_revision', 'inspection_stage', 'surface_condition',
+  'report_revision', 'report_date',
+  'inspector_level', 'inspector_sector', 'inspector_certificate', 'inspector_valid_until',
+  'inspected_weld_length', 'inspection_scope_percent', 'inspected_side', 'visual_method',
+  'illuminance_lux', 'viewing_distance_mm', 'viewing_angle_deg',
+  'test_equipment', 'equipment_type', 'equipment_serial', 'equipment_check_date',
+  'luxmeter_type', 'luxmeter_serial',
+  'finding_location', 'finding_reference', 'finding_description', 'finding_attachment_reference',
+];
+
+function optionalReportData() {
+  if (jointType() !== 'fillet') return {};
+  return Object.fromEntries(OPTIONAL_REPORT_FIELD_IDS.flatMap(id => {
+    const value = $(`#${id}`)?.value?.trim() || '';
+    return value ? [[id, value]] : [];
+  }));
 }
 
 function jointSvg(type) {
@@ -319,6 +340,7 @@ function updateJointVisuals() {
   $('#general-s-field')?.classList.toggle('hidden', type !== 'butt');
   $('#general-misalignment-variant-field')?.classList.toggle('hidden', type !== 'butt');
   $('#access-face-field')?.classList.toggle('hidden', type === 'fillet');
+  $$('.fillet-vt-details, .fillet-only-control').forEach(element => element.classList.toggle('hidden', type !== 'fillet'));
   if (type === 'fillet') $('#access_face').checked = true;
   renderGeometryFields();
   renderCriteria();
@@ -556,6 +578,7 @@ function collectPayload() {
       report_id: $('#report_id').value.trim(), inspection_date: $('#inspection_date').value,
       wps: $('#wps').value.trim(), component: $('#component').value.trim(),
       inspector: $('#inspector').value.trim(), location: $('#location').value.trim(),
+      ...optionalReportData(),
       notes: $('#report_notes').value.trim()
     },
     joint_type: jointType(), required_quality: requiredQuality(),
@@ -754,6 +777,7 @@ function downloadPdf() {
       ...state.lastResult,
       report: {
         ...(state.lastResult.report || {}),
+        ...optionalReportData(),
         notes: $('#report_notes').value.trim(),
       },
     };
@@ -783,9 +807,23 @@ function bindStaticInputs() {
   $('#access_root').addEventListener('change', () => { renderGeometryFields(); renderCriteria(); scheduleLiveEvaluation(); });
   $('#misalignment-variant')?.addEventListener('change', () => scheduleLiveEvaluation());
   $('#download-pdf').addEventListener('click', downloadPdf);
+  $$('.optional-data-toggle').forEach(button => button.addEventListener('click', () => {
+    const panel = document.getElementById(button.dataset.optionalPanel);
+    if (!panel) return;
+    const expanded = button.getAttribute('aria-expanded') === 'true';
+    button.setAttribute('aria-expanded', String(!expanded));
+    button.textContent = expanded ? button.dataset.closedLabel : button.dataset.openLabel;
+    panel.hidden = expanded;
+  }));
   $$('.step[data-target]').forEach(step => step.addEventListener('click', () => document.getElementById(step.dataset.target)?.scrollIntoView({behavior:'smooth', block:'start'})));
   ['#report_id','#inspection_date','#wps','#component','#inspector','#location','#report_notes'].forEach(selector => {
     $(selector)?.addEventListener('input', () => {
+      if (state.lastResult) scheduleLiveEvaluation(450);
+    });
+  });
+  $$('.optional-data-panel input, .optional-data-panel select, .optional-data-panel textarea').forEach(input => {
+    const eventName = input.tagName === 'SELECT' ? 'change' : 'input';
+    input.addEventListener(eventName, () => {
       if (state.lastResult) scheduleLiveEvaluation(450);
     });
   });
