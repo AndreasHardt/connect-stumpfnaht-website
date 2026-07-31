@@ -21,6 +21,31 @@ function pathPoint(value) {
   return `${value.x.toFixed(2)} ${value.y.toFixed(2)}`;
 }
 
+const STATUS_COLORS = {
+  pass: '#1f7a4d',
+  fail: '#b33a3a',
+  incomplete: '#7f8b93',
+};
+
+function statusStyle(status, accessible) {
+  const normalized = accessible && ['pass', 'fail'].includes(status) ? status : 'incomplete';
+  return {
+    normalized,
+    color: STATUS_COLORS[normalized],
+    dash: accessible ? '' : 'stroke-dasharray="7 5"',
+  };
+}
+
+function reinforcementIndicators(feature, left, right, direction, style) {
+  const horizontal = 18;
+  const vertical = 16 * direction;
+  const leftPath = `M ${(left.x - horizontal).toFixed(2)} ${left.y.toFixed(2)} L ${left.x.toFixed(2)} ${left.y.toFixed(2)} L ${left.x.toFixed(2)} ${(left.y + vertical).toFixed(2)}`;
+  const rightPath = `M ${(right.x + horizontal).toFixed(2)} ${right.y.toFixed(2)} L ${right.x.toFixed(2)} ${right.y.toFixed(2)} L ${right.x.toFixed(2)} ${(right.y + vertical).toFixed(2)}`;
+  const attributes = `data-status-feature="${feature}" data-status="${style.normalized}" data-status-horizontal-mirrors-height="true" fill="none" stroke="${style.color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" ${style.dash}`;
+  return `<path ${attributes} data-status-side="left" d="${leftPath}"/>
+    <path ${attributes} data-status-side="right" d="${rightPath}"/>`;
+}
+
 export function normalizeButtGeometry(geometry = {}) {
   const t1 = Math.max(0.5, finite(geometry.t1 ?? geometry.t, 8));
   const t2 = Math.max(0.5, finite(geometry.t2 ?? geometry.t, 8));
@@ -29,10 +54,11 @@ export function normalizeButtGeometry(geometry = {}) {
   const hD = Math.max(0, finite(geometry.hD ?? geometry.butt_reinforcement_h, 1));
   const bW = Math.max(3, finite(geometry.bW ?? geometry.root_reinforcement_width_b, 6));
   const hW = Math.max(0, finite(geometry.hW ?? geometry.root_reinforcement_h, 0.8));
-  const leftTop = 0;
-  const rightTop = hKV;
-  const leftBottom = -t1;
-  const rightBottom = hKV - t2;
+  // Verbindliche Zuordnung: T2 liegt links und höher, T1 liegt rechts.
+  const leftTop = hKV;
+  const rightTop = 0;
+  const leftBottom = hKV - t2;
+  const rightBottom = -t1;
   const zeroY = ((leftTop + leftBottom) / 2 + (rightTop + rightBottom) / 2) / 2;
   return {
     t1, t2, hKV, bD, hD, bW, hW,
@@ -41,7 +67,7 @@ export function normalizeButtGeometry(geometry = {}) {
   };
 }
 
-export function buttGeometrySvg(geometry = {}, accessibility = {face:true, root:true}) {
+export function buttGeometrySvg(geometry = {}, accessibility = {face:true, root:true}, statuses = {}) {
   const g = normalizeButtGeometry(geometry);
   const plateWidth = Math.max(22, g.bD / 2 + 12, g.bW / 2 + 12);
   const minY = Math.min(g.leftBottom - g.hW - 3, g.rightBottom - g.hW - 3);
@@ -84,12 +110,18 @@ export function buttGeometrySvg(geometry = {}, accessibility = {face:true, root:
 
   const faceMeasured = accessibility.face !== false;
   const rootMeasured = accessibility.root !== false;
+  const deckStyle = statusStyle(statuses.deck, faceMeasured);
+  const rootStyle = statusStyle(statuses.root, rootMeasured);
+  const deckIndicators = reinforcementIndicators('deck-reinforcement', leftDeck, rightDeck, -1, deckStyle);
+  const rootIndicators = reinforcementIndicators('root-reinforcement', leftRoot, rightRoot, 1, rootStyle);
   return `<svg viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}" role="img" aria-label="Dynamische Stumpfnahtdarstellung im I-Stoß" data-joint="butt" data-inner-width-mm="${g.innerWidth.toFixed(1)}">
-    <path data-component="1" d="M ${pathPoint(leftPlateTop)} L ${pathPoint(leftJointTop)} L ${pathPoint(leftJointBottom)} L ${pathPoint(leftPlateBottom)} Z" fill="${PLATE_COLOR}" opacity=".96"/>
-    <path data-component="2" d="M ${pathPoint(rightJointTop)} L ${pathPoint(rightPlateTop)} L ${pathPoint(rightPlateBottom)} L ${pathPoint(rightJointBottom)} Z" fill="${PLATE_COLOR}" opacity=".96"/>
+    <path data-component="2" data-side="left" data-thickness-mm="${g.t2.toFixed(1)}" d="M ${pathPoint(leftPlateTop)} L ${pathPoint(leftJointTop)} L ${pathPoint(leftJointBottom)} L ${pathPoint(leftPlateBottom)} Z" fill="${PLATE_COLOR}" opacity=".96"/>
+    <path data-component="1" data-side="right" data-thickness-mm="${g.t1.toFixed(1)}" d="M ${pathPoint(rightJointTop)} L ${pathPoint(rightPlateTop)} L ${pathPoint(rightPlateBottom)} L ${pathPoint(rightJointBottom)} Z" fill="${PLATE_COLOR}" opacity=".96"/>
     <path data-weld-metal="true" d="${weldPath}" fill="${WELD_FILL}" fill-opacity=".58" stroke="${WELD_STROKE}" stroke-width="3" stroke-linejoin="round"/>
     <path data-contour="deck" data-measured="${faceMeasured}" d="M ${pathPoint(leftDeck)} Q ${pathPoint(point(-g.bD / 4, deckBaseAtCenter + g.hD, scale, originX, originY))} ${pathPoint(deckApex)} Q ${pathPoint(point(g.bD / 4, deckBaseAtCenter + g.hD, scale, originX, originY))} ${pathPoint(rightDeck)}" fill="none" stroke="${WELD_STROKE}" stroke-width="3" ${faceMeasured ? '' : 'stroke-dasharray="8 5" opacity=".55"'}/>
     <path data-contour="root" data-measured="${rootMeasured}" d="M ${pathPoint(leftRoot)} Q ${pathPoint(point(-g.bW / 4, rootBaseAtCenter - g.hW, scale, originX, originY))} ${pathPoint(rootApex)} Q ${pathPoint(point(g.bW / 4, rootBaseAtCenter - g.hW, scale, originX, originY))} ${pathPoint(rightRoot)}" fill="none" stroke="${WELD_STROKE}" stroke-width="3" ${rootMeasured ? '' : 'stroke-dasharray="8 5" opacity=".55"'}/>
+    ${deckIndicators}
+    ${rootIndicators}
     <line data-zero-axis="true" x1="${(originX - 5).toFixed(2)}" y1="${point(0, g.zeroY, scale, originX, originY).y.toFixed(2)}" x2="${(originX + 5).toFixed(2)}" y2="${point(0, g.zeroY, scale, originX, originY).y.toFixed(2)}" stroke="#7f8b93" stroke-width="1.5"/>
   </svg>`;
 }
