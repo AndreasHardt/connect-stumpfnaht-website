@@ -12,10 +12,18 @@ function activeJointType() {
       : document.querySelector('input[name="joint_type"]:checked')?.value || 'fillet';
 }
 
-function filterLabel() {
-  return activeJointType() === 'fillet'
-    ? 'Nur die von Z1, Z2, m und h abhängigen Prüfkriterien anzeigen'
-    : 'Nur die von hKV, bD, hD, bW und hW abhängigen Prüfkriterien anzeigen';
+function setButtonLabel(button) {
+  if (state.measurementOnly) {
+    button.textContent = 'Alle Kriterien anzeigen';
+    button.removeAttribute('aria-label');
+    return;
+  }
+  button.setAttribute('aria-label', 'Nur von den Messwerten abhängige Prüfkriterien anzeigen');
+  const firstLine = document.createElement('span');
+  firstLine.textContent = 'Nur von den Messwerten abhängige';
+  const secondLine = document.createElement('span');
+  secondLine.textContent = 'Prüfkriterien anzeigen';
+  button.replaceChildren(firstLine, secondLine);
 }
 
 function classifyCards() {
@@ -47,7 +55,7 @@ function applyFilter() {
   const button = document.querySelector('#toggle-measurement-only');
   if (button) {
     button.setAttribute('aria-pressed', String(state.measurementOnly));
-    button.textContent = state.measurementOnly ? 'Alle Kriterien anzeigen' : filterLabel();
+    setButtonLabel(button);
   }
 }
 
@@ -59,7 +67,7 @@ function ensureButton() {
   button.className = 'secondary';
   button.id = 'toggle-measurement-only';
   button.setAttribute('aria-pressed', 'false');
-  button.textContent = filterLabel();
+  setButtonLabel(button);
   button.addEventListener('click', () => {
     state.measurementOnly = !state.measurementOnly;
     applyFilter();
