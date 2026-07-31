@@ -6,7 +6,7 @@ import {
   statusLabel,
 } from './result-format.js?v=044d1e9cde1f';
 import { filletGeometrySvg } from './fillet-geometry-svg.js?v=d7a8dbf377ac';
-import { buttGeometrySvg } from './butt-geometry-svg.js';
+import { buttGeometrySvg } from './butt-geometry-svg.js?v=fc4fa8f283a2';
 
 const inspectionLabels = {
   complete: 'vollständig',
@@ -87,13 +87,56 @@ function geometryFigure(geometry, jointType, result) {
     ? filletGeometrySvg(geometry, geometry.a, geometry.geometry_status?.status)
     : buttGeometrySvg(geometry, geometry.accessibility, buttStatuses(result));
   if (!svg) return '';
-  const caption = jointType === 'Kehlnaht'
-    ? 'Grau: Sollkontur | Schwarz: modellierte Istkontur | Grün/Rot/Grau: maßlicher Geometriestatus nach RGL-01 | Blechdicken aus T1/T2'
-    : 'Stumpfnaht im I-Stoß | T2 links und höher, T1 rechts | Grün/Rot/Grau: Überhöhungsstatus an beiden Kanten';
-  return `<figure class="report-geometry-figure">
-    ${svg}
-    <figcaption class="report-geometry-caption">${caption}</figcaption>
-  </figure>`;
+  return `<figure class="report-geometry-figure" aria-label="Grafische Darstellung der ${escapeHtml(jointType)}">${svg}</figure>`;
+}
+
+function optionalReportSection(title, report, definitions) {
+  const values = definitions.flatMap(([id, label, unit = '']) => {
+    const value = String(report[id] || '').trim();
+    return value ? [{label, value: `${value}${unit}`} ] : [];
+  });
+  if (!values.length) return '';
+  const rows = [];
+  for (let index = 0; index < values.length; index += 2) {
+    const left = values[index];
+    const right = values[index + 1];
+    rows.push(`<tr><td>${escapeHtml(left.label)}</td><td>${escapeHtml(left.value)}</td>${right ? `<td>${escapeHtml(right.label)}</td><td>${escapeHtml(right.value)}</td>` : '<td></td><td></td>'}</tr>`);
+  }
+  return `<section class="optional-report-section"><h2>${escapeHtml(title)}</h2><table class="info optional-report-table">${rows.join('')}</table></section>`;
+}
+
+function optionalReportSections(report, jointType) {
+  if (jointType !== 'Kehlnaht') return '';
+  return [
+    optionalReportSection('Ergänzende Prüfdaten', report, [
+      ['manufacturer', 'Hersteller des Schweißteils'], ['inspection_organization', 'Prüfstelle / Prüforganisation'],
+      ['customer', 'Kunde / Auftraggeber'], ['project', 'Auftrag / Projekt'],
+      ['component_number', 'Bauteilnummer'], ['weld_number', 'Schweißnahtnummer'],
+      ['inspection_position', 'Prüfposition / Messstelle'], ['drawing_number', 'Zeichnungsnummer'],
+      ['drawing_revision', 'Zeichnungsrevision'], ['material_t1', 'Werkstoff Bauteil 1'],
+      ['material_t2', 'Werkstoff Bauteil 2'], ['welding_process', 'Schweißprozess nach DIN EN ISO 4063'],
+      ['wps_revision', 'WPS-Revision'], ['inspection_stage', 'Prüfstadium'],
+      ['surface_condition', 'Oberflächenzustand'], ['report_revision', 'Berichtsrevision'],
+      ['report_date', 'Berichtsdatum'],
+    ]),
+    optionalReportSection('Prüferqualifikation', report, [
+      ['inspector_level', 'Qualifikationsstufe'], ['inspector_sector', 'Qualifikationssektor'],
+      ['inspector_certificate', 'Zertifikatsnummer'], ['inspector_valid_until', 'Gültig bis'],
+    ]),
+    optionalReportSection('Prüfbedingungen und Prüfmittel', report, [
+      ['inspected_weld_length', 'Geprüfte Nahtlänge', ' mm'], ['inspection_scope_percent', 'Prüfumfang', ' %'],
+      ['inspected_side', 'Tatsächlich geprüfte Seite'], ['visual_method', 'Art der Sichtprüfung'],
+      ['illuminance_lux', 'Beleuchtungsstärke', ' lx'], ['viewing_distance_mm', 'Betrachtungsabstand', ' mm'],
+      ['viewing_angle_deg', 'Betrachtungswinkel', '°'], ['test_equipment', 'Verwendetes Prüfmittel'],
+      ['equipment_type', 'Prüfmittel - Hersteller / Typ'], ['equipment_serial', 'Prüfmittel - Geräte- / Seriennummer'],
+      ['equipment_check_date', 'Prüfmittel - Kalibrier- / Prüfdatum'], ['luxmeter_type', 'Luxmeter - Hersteller / Typ'],
+      ['luxmeter_serial', 'Luxmeter - Geräte- / Seriennummer'],
+    ]),
+    optionalReportSection('Befunddetails zur Prüfposition', report, [
+      ['finding_location', 'Genaue Lage / Längskoordinate'], ['finding_reference', 'Bezugskante / Nullpunkt'],
+      ['finding_description', 'Befundbeschreibung'], ['finding_attachment_reference', 'Foto-, Skizzen- oder Anlagenreferenz'],
+    ]),
+  ].join('');
 }
 function messagesText(item) {
   return (item?.messages || []).map(message => `<div>${escapeHtml(message)}</div>`).join('') || '—';
@@ -126,20 +169,25 @@ function resultRows(result, otherResult, edition) {
     </tr>`;
   }).join('');
 }
-function reportHeader(report, access, result, edition, config, today) {
+function reportHeader(report, access, result, edition, config, today, geometry) {
   const accessText = result.joint_type === 'Kehlnaht'
     ? `Deckseite: vorausgesetzt; Wurzelseite: ${access.root ? 'ja' : 'nein'}`
     : `Deckseite: ${access.face ? 'ja' : 'nein'}; Wurzelseite: ${access.root ? 'ja' : 'nein'}`;
-  return `<header><div class="brand">${escapeHtml(config.title)}</div><div class="subtitle">${escapeHtml(config.subtitle)}</div><div class="meta">${escapeHtml(config.platform || 'Hardt-Wiehl Connect')} | ${escapeHtml(config.domain)}</div></header>
-    <h1>${edition === 2023 ? 'Bericht nach DIN EN ISO 5817:2023' : 'Vergleichsbericht nach DIN EN ISO 5817:2014'}</h1>
-    ${edition === 2014 ? '<div class="legacy-notice"><strong>Vergleich nach älterer Normausgabe.</strong> Maßgebend bleibt die Ausgabe 2023.</div>' : ''}
-    <table class="info">
+  return `<div class="report-head-grid">
+    <div class="report-head-data">
+      <header><div class="brand">${escapeHtml(config.title)}</div><div class="subtitle">${escapeHtml(config.subtitle)}</div><div class="meta">${escapeHtml(config.platform || 'Hardt-Wiehl Connect')} | ${escapeHtml(config.domain)}</div></header>
+      <h1>${edition === 2023 ? 'Bericht nach DIN EN ISO 5817:2023' : 'Vergleichsbericht nach DIN EN ISO 5817:2014'}</h1>
+      ${edition === 2014 ? '<div class="legacy-notice"><strong>Vergleich nach älterer Normausgabe.</strong> Maßgebend bleibt die Ausgabe 2023.</div>' : ''}
+      <table class="info report-head-info">
       <tr><td>Prüfort</td><td>${escapeHtml(report.location || '—')}</td><td>Berichtsnummer</td><td>${escapeHtml(report.report_id || '—')}</td></tr>
       <tr><td>Prüfer</td><td>${escapeHtml(report.inspector || '—')}</td><td>Prüfdatum</td><td>${escapeHtml(report.inspection_date || today)}</td></tr>
       <tr><td>Bauteil</td><td>${escapeHtml(report.component || '—')}</td><td>WPS-Nr.</td><td>${escapeHtml(report.wps || '—')}</td></tr>
       <tr><td>Nahtart</td><td>${escapeHtml(result.joint_type)}</td><td>Normausgabe</td><td>DIN EN ISO 5817:${edition}</td></tr>
       <tr><td>SOLL-Bewertungsgruppe</td><td>${escapeHtml(result.required_quality)}</td><td>Zugänglichkeit</td><td>${accessText}</td></tr>
-    </table>
+      </table>
+    </div>
+    ${geometryFigure(geometry, result.joint_type, result)}
+    </div>
     <div class="summary"><div><strong>Prüfstatus</strong><span>${escapeHtml(inspectionLabels[result.inspection_status] || result.inspection_status)}</span></div><div><strong>Gesamtergebnis</strong><span>${escapeHtml(statusLabel(result.status))}</span></div><div><strong>Bewertung</strong><span>${escapeHtml(result.achieved_quality ? `${result.achieved_quality} erreicht` : statusLabel(result.status))}</span></div></div>`;
 }
 
@@ -151,10 +199,10 @@ function reportSection({ edition, result, otherResult, report, geometry, access,
     : '';
   return `<section class="report-section ${isLegacy ? 'comparison-report' : 'current-report'}" data-edition="${edition}">
     ${isTest ? '<div class="watermark">TESTBERICHT</div>' : ''}<div class="report-content">
-    ${testNotice}${reportHeader(report, access, result, edition, config, today)}
+    ${testNotice}${reportHeader(report, access, result, edition, config, today, geometry)}
+    ${optionalReportSections(report, result.joint_type)}
     <div class="traceability">Regelbibliothek ${escapeHtml(result.library_version)} | Inhaltshash ${escapeHtml(result.library_content_sha256.slice(0, 16))}… | Assistentversion ${escapeHtml(config.prototype_version)}. Die Bewertung gilt nur für den dokumentierten, zugänglichen Prüfbereich.</div>
     <h2>Vorgaben, Messung und Berechnung</h2><table class="info">${geometryRows(geometry, result.joint_type)}</table>
-    ${geometryFigure(geometry, result.joint_type, result)}
     ${combinedNotice}
     <div class="report-results">
     <h2>Einzelergebnisse – Ausgabe ${edition}</h2>
@@ -187,6 +235,7 @@ function renderReport(payload) {
   geometry.accessibility = access;
   const isTest = (data.app_mode || config.app_mode) !== 'production';
   const today = new Intl.DateTimeFormat('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'}).format(new Date());
+  document.documentElement.style.setProperty('--report-id', JSON.stringify(report.report_id || '—'));
   document.title = report.report_id || 'ISO5817-Prüfbericht';
   document.querySelector('#reports').innerHTML =
     reportSection({ edition: 2023, result: primary, otherResult: comparison, report, geometry, access, config, today, isTest })
