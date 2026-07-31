@@ -287,6 +287,8 @@ body.production-mode .test-system-banner { display:none; }
 .norm-comparison .switch-row { padding:2px 0; }
 .report-notes-input { display:block; margin-top:18px; }
 .report-notes-input textarea { min-height:78px; resize:vertical; }
+#toggle-measurement-only { line-height:1.22; text-align:center; }
+#toggle-measurement-only span { display:block; }
 .area-2 .geometry-layout { grid-template-columns:minmax(170px,.46fr) minmax(0,1.54fr) !important; gap:16px !important; max-width:none !important; margin:0 !important; align-items:stretch !important; }
 .geometry-measurements { display:flex; align-items:stretch; }
 .area-2 #geometry-fields { width:100%; grid-template-columns:1fr !important; align-content:space-evenly; gap:12px; }
