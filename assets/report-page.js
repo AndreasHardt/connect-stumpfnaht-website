@@ -5,7 +5,7 @@ import {
   assessmentText,
   statusLabel,
 } from './result-format.js?v=044d1e9cde1f';
-import { filletGeometrySvg } from './fillet-geometry-svg.js?v=24fff081d78e';
+import { filletGeometrySvg } from './fillet-geometry-svg.js?v=d9fdfae0a349';
 import { buttGeometrySvg } from './butt-geometry-svg.js';
 
 const inspectionLabels = {
@@ -51,9 +51,9 @@ function geometryRows(geometry, jointType) {
     const faceValue = value => geometry.accessibility?.face === false ? 'schematisch – nicht geprüft' : mm(value);
     const rootValue = value => geometry.accessibility?.root === false ? 'schematisch – nicht geprüft' : mm(value);
     return `<tr><td>Bauteildicke t1</td><td>${mm(t1)}</td><td>Bauteildicke t2</td><td>${mm(t2)}</td></tr>
-      <tr><td>Nahtdicke s (Konstruktions-/Expertenwert)</td><td>${mm(geometry.s)}</td><td>Kantenversatz hKV (t2 höher)</td><td>${mm(geometry.hKV)}</td></tr>
-      <tr><td>Breite der Nahtüberhöhung bD</td><td>${faceValue(geometry.bD)}</td><td>Nahtüberhöhung hD</td><td>${faceValue(geometry.hD)}</td></tr>
-      <tr><td>Breite der Wurzelüberhöhung bW</td><td>${rootValue(geometry.bW)}</td><td>Wurzelüberhöhung hW</td><td>${rootValue(geometry.hW)}</td></tr>
+      <tr><td>Nahtdicke s</td><td>${mm(geometry.s)}</td><td>Kantenversatz hKV (T2 höher)</td><td>${mm(geometry.hKV)}</td></tr>
+      <tr><td>Breite Decklage</td><td>${faceValue(geometry.bD)}</td><td>Decklagenüberhöhung</td><td>${faceValue(geometry.hD)}</td></tr>
+      <tr><td>Breite Wurzel</td><td>${rootValue(geometry.bW)}</td><td>Wurzelüberhöhung</td><td>${rootValue(geometry.hW)}</td></tr>
       <tr><td>Ausführung Kantenversatz</td><td>${escapeHtml(geometry.misalignment_variant || '5071')}</td><td>Innere Darstellungsbreite bI</td><td>3,0 mm</td></tr>`;
   }
   const profile = profileLabels[geometry.profile_class] || '—';
@@ -74,14 +74,22 @@ function geometryRows(geometry, jointType) {
 }
 
 
-function geometryFigure(geometry, jointType) {
+function buttStatuses(result) {
+  const byId = Object.fromEntries((result?.results || []).map(item => [item.rule_id, item.status]));
+  return {
+    deck: byId['IMP-000009'] || 'incomplete',
+    root: byId['IMP-000011'] || 'incomplete',
+  };
+}
+
+function geometryFigure(geometry, jointType, result) {
   const svg = jointType === 'Kehlnaht'
     ? filletGeometrySvg(geometry, geometry.a, geometry.geometry_status?.status)
-    : buttGeometrySvg(geometry, geometry.accessibility);
+    : buttGeometrySvg(geometry, geometry.accessibility, buttStatuses(result));
   if (!svg) return '';
   const caption = jointType === 'Kehlnaht'
-    ? 'Grau: Sollkontur | Schwarz: modellierte Istkontur | Grün/Rot/Grau: maßlicher Geometriestatus nach RGL-01'
-    : 'Stumpfnaht im I-Stoß | durchgezogen: gemessene Seite | gestrichelt: schematische, nicht geprüfte Seite';
+    ? 'Grau: Sollkontur | Schwarz: modellierte Istkontur | Grün/Rot/Grau: maßlicher Geometriestatus nach RGL-01 | Blechdicken aus T1/T2'
+    : 'Stumpfnaht im I-Stoß | T2 links und höher, T1 rechts | Grün/Rot/Grau: Überhöhungsstatus an beiden Kanten';
   return `<figure class="report-geometry-figure">
     ${svg}
     <figcaption class="report-geometry-caption">${caption}</figcaption>
@@ -146,13 +154,14 @@ function reportSection({ edition, result, otherResult, report, geometry, access,
     ${testNotice}${reportHeader(report, access, result, edition, config, today)}
     <div class="traceability">Regelbibliothek ${escapeHtml(result.library_version)} | Inhaltshash ${escapeHtml(result.library_content_sha256.slice(0, 16))}… | Assistentversion ${escapeHtml(config.prototype_version)}. Die Bewertung gilt nur für den dokumentierten, zugänglichen Prüfbereich.</div>
     <h2>Vorgaben, Messung und Berechnung</h2><table class="info">${geometryRows(geometry, result.joint_type)}</table>
-    ${geometryFigure(geometry, result.joint_type)}
+    ${geometryFigure(geometry, result.joint_type, result)}
     ${combinedNotice}
     <div class="report-results">
     <h2>Einzelergebnisse – Ausgabe ${edition}</h2>
     <div class="table-context">SOLL bezeichnet die Anforderung, IST den festgestellten Befund oder Messwert. Berechnungsgrundlage und Normvergleich sind kompakt in Kriterium beziehungsweise Status zusammengeführt.</div>
     <table class="result-table"><thead><tr><th>Nr.</th><th>Kriterium / Berechnungsgrundlage</th><th>SOLL</th><th>IST</th><th>Bemerkung</th><th>Status</th></tr></thead><tbody>${resultRows(result, otherResult, edition)}</tbody></table>
     ${report.notes ? `<h2 class="report-notes-title">Bemerkungen</h2><div class="report-notes">${escapeHtml(report.notes)}</div>` : ''}
+    <div class="note report-responsibility"><strong>Verantwortlichkeit:</strong> Für die eingegebenen Daten, die fachliche Prüfung und den Inhalt dieses Berichts ist der im Bericht genannte Prüfer verantwortlich. Andreas Hardt ist Bereitsteller des digitalen Werkzeugs und nicht Prüfer dieses Berichts.</div>
     <div class="signature"><div><span class="signature-line"></span><div><strong>Prüfer:</strong> ${escapeHtml(report.inspector || '—')} <strong>Datum:</strong> ${escapeHtml(today)}</div></div></div>
     </div>
     <div class="report-actions"><button class="print" type="button" data-print-edition="${edition}">Bericht ${edition} drucken</button></div>

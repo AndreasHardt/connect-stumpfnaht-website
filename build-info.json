@@ -9,18 +9,18 @@
   "library_version": "0.8 – Datenqualitätsaudit, Scope-Bereinigung und JSON-Exportvorbereitung",
   "library_content_sha256": "f6d86d698e6dbcad27912cc67613572de9c9dd23cab168c59dcb0499963f6360",
   "published_library_sha256": "1c1ef7b1b7dfa9376928091e0cbc51d64b888377e33c2b61ccee59680502d169",
-  "built_at": "2026-07-31T08:57:31.619Z",
+  "built_at": "2026-07-31T15:25:45.437Z",
   "files": {
-    "assets/app.js": "e8263540e516a650943ab54caa044cd2a5c7a7c8a4d689114ebf6471839c1e9b",
-    "assets/butt-geometry-svg.js": "27a4db7bda0e9ff56ab46d7d9c20779a00accb1b3d8dfc664eb227a864eb3707",
+    "assets/app.js": "52dc4a7c09fc5ab3a0454feb3e190de355391497f2cb28a0e9a9f57375f20275",
+    "assets/butt-geometry-svg.js": "4d263d4385ebabf6acd7ebb134644c82688328f52f6d8b2209de311af33a643a",
     "assets/criterion-filter.js": "200cf16397161636bd2ec1518757d3d1b4fab3b35010bda8786c1da95d74acfd",
     "assets/engine.js": "1f08ac66c1c3ce8cde36fec87ef97e2fadb6bd893a7c912a6673e751992e7ef0",
     "assets/evaluation.js": "35f3a22547ca80101054c50789ab5bd117012a308f878c092e0c1e41d6c81b9f",
-    "assets/fillet-geometry-svg.js": "24fff081d78e8eb5fb7a93d82f30575adc13a21ddd6fbd10bea06ca2fb54cbd1",
+    "assets/fillet-geometry-svg.js": "d9fdfae0a349b483977525695e31f0e0b7e44a3c7c774c88b793c209be0a7690",
     "assets/geometry.js": "5d8f886d07c119bf1dc20cb4826d79f06fe79c6c07dccc0c8966b7647a66c85b",
     "assets/graphics/README.md": "6659ccf0c9cf99a9f2c9244184c546a2599f50604072523d5e00ece6b6930f96",
     "assets/graphics/hero-industrial-hall.jpg": "d4a983a8d9f737bd28840bbe931217dd56afa5c0433061fc6006330cd5157038",
-    "assets/report-page.js": "c5f3efdf7322c4f9a7b86e50322ffde94ea3ea1b6f02cf2eccbd8882bbf56b6a",
+    "assets/report-page.js": "689ced57a54010fcf1735937ca6c164ed83a3e26f1aef7dff0cea643f71e3229",
     "assets/report.css": "f576e2d89821a265de5040831649fc1d97ff38933a12c1f057e00594f33219f6",
     "assets/report.js": "7e2eaafd8c9f005c0b2137e1c09f93fc1009a1d9d0172c74d74f9ba7f6d63ecd",
     "assets/result-format.js": "044d1e9cde1fd44944c338db6a2ff7335e49d274a1e7cf4b08d69751fcb696f3",
@@ -29,6 +29,6 @@
     "data/rules.v1.json": "1c1ef7b1b7dfa9376928091e0cbc51d64b888377e33c2b61ccee59680502d169",
     "data/rules.v1.json.gz": "48e0088eee2c4dea58c04fd7587828a603ad2afffc0a074ace05221105f7c21a",
     "data/ui-config.json": "6bbfa708c3d53e438a1e9339fce05036a4b634e06e4eb5d942ac84ed07a6537e",
-    "report.html": "a538d30e2cc6d5a2c121ea2656c12686fad55f87d7d36c13eef9c9dc624dceeb"
+    "report.html": "d69b65a2c0b902db500fa204f1fadc38f18b6ff596791da26bdddef695a3a285"
   }
 }

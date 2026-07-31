@@ -1,7 +1,7 @@
 import { createEvaluationService } from './evaluation.js?v=35f3a22547ca';
 import { openReport } from './report.js?v=7e2eaafd8c9f';
 import { computeFilletGeometry, computeFilletNominalMeasurements, GEOMETRY_TOLERANCE_MM } from './geometry.js?v=5d8f886d07c1';
-import { filletGeometrySvg } from './fillet-geometry-svg.js?v=24fff081d78e';
+import { filletGeometrySvg } from './fillet-geometry-svg.js?v=d9fdfae0a349';
 import { buttGeometrySvg } from './butt-geometry-svg.js';
 
 const state = {
@@ -11,6 +11,7 @@ const state = {
   service: null,
   geometry: null,
   geometryStatus: 'incomplete',
+  buttGeometryStatuses: {deck:'incomplete', root:'incomplete'},
   liveTimer: null,
   liveBusy: false,
   initialized: false,
@@ -153,6 +154,39 @@ function renderGeometrySummary(result) {
     <small>Symmetrie- und Profiltoleranz: ${formatMm(result.tolerance)}; messtechnische, nicht normative Toleranz. Die farbige Linie vom Wurzelpunkt bis m zeigt ausschließlich diesen Geometriestatus; Einbrandkerben und andere separate Kriterien ändern ihre Farbe nicht.</small>`;
 }
 
+function currentButtGeometry() {
+  return {
+    t1: numberOrNull(geometryValue('t1')),
+    t2: numberOrNull(geometryValue('t2')),
+    hKV: numberOrNull(geometryValue('hKV')),
+    bD: numberOrNull(geometryValue('bD')),
+    hD: numberOrNull(geometryValue('hD')),
+    bW: numberOrNull(geometryValue('bW')),
+    hW: numberOrNull(geometryValue('hW')),
+  };
+}
+
+function buttStatusesFromResults(results = []) {
+  const byId = Object.fromEntries(results.map(item => [item.rule_id, item.status]));
+  return {
+    deck: byId['IMP-000009'] || 'incomplete',
+    root: byId['IMP-000011'] || 'incomplete',
+  };
+}
+
+function renderButtGeometry() {
+  if (jointType() !== 'butt') return;
+  $('#geometry-schematic').innerHTML = buttGeometrySvg(currentButtGeometry(), {
+    face: $('#access_face').checked,
+    root: $('#access_root').checked,
+  }, state.buttGeometryStatuses);
+}
+
+function updateButtGeometryStatus(results = []) {
+  state.buttGeometryStatuses = buttStatusesFromResults(results);
+  renderButtGeometry();
+}
+
 function updateFilletGeometryStatus(status) {
   const normalized = ['pass', 'fail'].includes(status) ? status : 'incomplete';
   const labels = {pass:'erfüllt', fail:'nicht erfüllt', incomplete:'noch unvollständig'};
@@ -174,26 +208,19 @@ function updateFilletGeometryStatus(status) {
 function refreshGeometry({schedule = true} = {}) {
   if (jointType() !== 'fillet') {
     state.geometry = null;
-    $('#geometry-schematic').innerHTML = buttGeometrySvg({
-      t1: numberOrNull(geometryValue('t1')),
-      t2: numberOrNull(geometryValue('t2')),
-      hKV: numberOrNull(geometryValue('hKV')),
-      bD: numberOrNull(geometryValue('bD')),
-      hD: numberOrNull(geometryValue('hD')),
-      bW: numberOrNull(geometryValue('bW')),
-      hW: numberOrNull(geometryValue('hW')),
-    }, {
-      face: $('#access_face').checked,
-      root: $('#access_root').checked,
-    });
+    state.buttGeometryStatuses = {deck:'incomplete', root:'incomplete'};
+    renderButtGeometry();
     const summary = $('#geometry-formula');
-    if (summary) summary.innerHTML = '<strong>Stumpfnaht im I-Stoß:</strong><br>Kantenversatz, Decklagen- und Wurzelkontur werden aus den zentralen Messwerten dargestellt. Gestrichelte Konturen kennzeichnen nicht zugängliche und daher nur schematisch dargestellte Seiten.';
+    if (summary) summary.innerHTML = '<strong>Stumpfnaht im I-Stoß:</strong><br>Kantenversatz, Decklagen- und Wurzelkontur werden aus den zentralen Messwerten dargestellt. Die farbigen Winkel an linker und rechter Kante zeigen den Status der jeweiligen Überhöhung; der waagerechte Teil übernimmt denselben Status. Nicht zugängliche Seiten erscheinen grau gestrichelt.';
     updateConditionalFields();
     if (schedule) scheduleLiveEvaluation();
     return;
   }
   state.geometryStatus = 'incomplete';
-  const result = computeFilletGeometry(filletGeometryInput());
+  const result = {
+    ...computeFilletGeometry(filletGeometryInput()),
+    ...parentThicknessValues(),
+  };
   state.geometry = result;
   $('#geometry-schematic').innerHTML = filletGeometrySvg(result, numberOrNull(geometryValue('a')), state.geometryStatus);
   const bField = $('#geo-b');
@@ -255,11 +282,11 @@ function renderGeometryFields() {
   captureFilletMeasurementValues(container);
   syncAutomaticFilletMeasurements({refresh:false});
   const fields = type === 'butt' ? [
-    {id:'hKV', label:'Kantenversatz hKV (t2 höher)', unit:'mm', value:existing.hKV || '0.0', min:0, max:99.9, step:.1},
-    {id:'bD', label:'Breite der Nahtüberhöhung – Deckseite bD', unit:'mm', value:existing.bD || '10.0', min:.1, max:99.9, step:.1, hidden:!$('#access_face').checked, accessSide:'face'},
-    {id:'hD', label:'Nahtüberhöhung – Deckseite hD', unit:'mm', value:existing.hD || '1.0', min:0, max:99.9, step:.1, hidden:!$('#access_face').checked, accessSide:'face'},
-    {id:'bW', label:'Breite der Wurzelüberhöhung – Wurzelseite bW', unit:'mm', value:existing.bW || '6.0', min:.1, max:99.9, step:.1, hidden:!$('#access_root').checked, accessSide:'root'},
-    {id:'hW', label:'Wurzelüberhöhung – Wurzelseite hW', unit:'mm', value:existing.hW || '0.8', min:0, max:99.9, step:.1, hidden:!$('#access_root').checked, accessSide:'root'},
+    {id:'hKV', label:'Kantenversatz hKV (T2 höher)', unit:'mm', value:existing.hKV || '0.0', min:0, max:99.9, step:.1},
+    {id:'bD', label:'Breite Decklage', unit:'mm', value:existing.bD || '10.0', min:.1, max:99.9, step:.1, hidden:!$('#access_face').checked, accessSide:'face'},
+    {id:'hD', label:'Decklagenüberhöhung', unit:'mm', value:existing.hD || '1.0', min:0, max:99.9, step:.1, hidden:!$('#access_face').checked, accessSide:'face'},
+    {id:'bW', label:'Breite Wurzel', unit:'mm', value:existing.bW || '6.0', min:.1, max:99.9, step:.1, hidden:!$('#access_root').checked, accessSide:'root'},
+    {id:'hW', label:'Wurzelüberhöhung', unit:'mm', value:existing.hW || '0.8', min:0, max:99.9, step:.1, hidden:!$('#access_root').checked, accessSide:'root'},
   ] : [
     {id:'z2', label:'Schenkellänge z2', unit:'mm', value:state.filletMeasurements.values.z2, min:.1, max:99.9, step:.1, valueMode:state.filletMeasurements.automatic.z2 ? 'automatic' : 'manual'},
     {id:'m', label:'Höhenmesswert m bei γ/2', unit:'mm', value:state.filletMeasurements.values.m, min:0, max:99.9, step:.1, valueMode:state.filletMeasurements.automatic.m ? 'automatic' : 'manual'},
@@ -582,7 +609,7 @@ function frontendValidation() {
   if (jointType() === 'butt') {
     const s = numberOrNull(geometryValue('s'));
     const hKV = numberOrNull(geometryValue('hKV'));
-    if (s === null || s <= 0) errors.push('Nahtdicke s als Konstruktions- oder Expertenwert ist erforderlich.');
+    if (s === null || s <= 0) errors.push('Nahtdicke s ist erforderlich.');
     if (hKV === null || hKV < 0) errors.push('Kantenversatz hKV ist erforderlich.');
     if ($('#access_face').checked) {
       if (!(numberOrNull(geometryValue('bD')) > 0)) errors.push('Breite der Nahtüberhöhung bD ist erforderlich.');
@@ -639,6 +666,7 @@ function setEvaluationState(status) {
 
 function renderIncompleteState(errors = []) {
   updateFilletGeometryStatus('incomplete');
+  updateButtGeometryStatus([]);
   state.lastPayload = null;
   state.lastResult = null;
   setEvaluationState('incomplete');
@@ -654,6 +682,7 @@ function renderIncompleteState(errors = []) {
 function renderResults(data) {
   const primary = data.primary;
   updateFilletGeometryStatus(data.geometry?.geometry_status?.status);
+  updateButtGeometryStatus(primary.results);
   setEvaluationState(primary.status);
   const summary = $('#result-summary');
   summary.querySelector('h2').textContent = primary.status === 'pass'
@@ -828,6 +857,7 @@ function renderResultDetails(item, comparison) {
 renderResults = function renderResultsSemantic(data) {
   const primary = data.primary;
   updateFilletGeometryStatus(data.geometry?.geometry_status?.status);
+  updateButtGeometryStatus(primary.results);
   setEvaluationState(primary.status);
   const summary = $('#result-summary');
   summary.querySelector('h2').textContent = primary.status === 'pass'
