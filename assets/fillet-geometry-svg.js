@@ -67,13 +67,15 @@ export function filletGeometrySvg(geometry, nominalA, geometryStatus = 'incomple
   if (!model) return '';
 
   const {root, transition1, transition2, middle, control} = model.points;
+  const t1 = Math.max(0.5, finiteNumber(geometry.t1 ?? geometry.t) ?? 8);
+  const t2 = Math.max(0.5, finiteNumber(geometry.t2 ?? geometry.t) ?? 8);
   const nominalGeometry = computeFilletNominalMeasurements(nominalA, model.gamma);
   const targetLeg = nominalGeometry.valid ? nominalGeometry.z1 : null;
   const target1 = targetLeg === null ? null : {x: targetLeg / Math.sin(model.gammaRad), y: 0};
   const target2 = targetLeg === null ? null : {x: targetLeg / Math.tan(model.gammaRad), y: targetLeg};
   const penetrationCurve = computeFilletPenetrationCurve(geometry);
 
-  const relevantSize = Math.max(model.z1, model.z2, model.m, nominalGeometry.valid ? nominalGeometry.a : 0);
+  const relevantSize = Math.max(model.z1, model.z2, model.m, t1, t2, nominalGeometry.valid ? nominalGeometry.a : 0);
   const overrun = Math.max(5, relevantSize * 0.2);
   const component1Length = Math.max(transition1.x, target1?.x || 0) + overrun;
   const component2Length = Math.max(
@@ -85,10 +87,22 @@ export function filletGeometrySvg(geometry, nominalA, geometryStatus = 'incomple
     x: component2Length * Math.cos(model.gammaRad),
     y: component2Length * Math.sin(model.gammaRad),
   };
+  const component1OuterRoot = {x: root.x, y: root.y - t1};
+  const component1OuterEnd = {x: component1End.x, y: component1End.y - t1};
+  const component2OutsideNormal = {x: -Math.sin(model.gammaRad), y: Math.cos(model.gammaRad)};
+  const component2OuterRoot = {
+    x: root.x + component2OutsideNormal.x * t2,
+    y: root.y + component2OutsideNormal.y * t2,
+  };
+  const component2OuterEnd = {
+    x: component2End.x + component2OutsideNormal.x * t2,
+    y: component2End.y + component2OutsideNormal.y * t2,
+  };
 
   const fitPoints = [
     root, transition1, transition2, middle, control,
     component1End, component2End,
+    component1OuterRoot, component1OuterEnd, component2OuterRoot, component2OuterEnd,
     ...(penetrationCurve
       ? [penetrationCurve.inner1, penetrationCurve.inner2, penetrationCurve.control1, penetrationCurve.control2]
       : []),
@@ -120,6 +134,10 @@ export function filletGeometrySvg(geometry, nominalA, geometryStatus = 'incomple
   const controlSvg = svgPoint(control);
   const component1EndSvg = svgPoint(component1End);
   const component2EndSvg = svgPoint(component2End);
+  const component1OuterRootSvg = svgPoint(component1OuterRoot);
+  const component1OuterEndSvg = svgPoint(component1OuterEnd);
+  const component2OuterRootSvg = svgPoint(component2OuterRoot);
+  const component2OuterEndSvg = svgPoint(component2OuterEnd);
   const targetPath = target1 && target2
     ? `<path data-contour="target" d="M ${svgPoint(target1)} L ${svgPoint(target2)}" fill="none" stroke="#7f8b93" stroke-width="7" stroke-linecap="round"/>`
     : '';
@@ -134,8 +152,8 @@ export function filletGeometrySvg(geometry, nominalA, geometryStatus = 'incomple
   const geometryStatusPath = `<path data-geometry-status="${normalizedStatus}" d="M ${rootSvg} L ${svgPoint(middle)}" fill="none" stroke="${statusColor}" stroke-width="4" stroke-linecap="round"/>`;
 
   return `<svg viewBox="0 0 300 180" role="img" aria-label="Plausibilitätsdarstellung der Kehlnaht">
-    <path data-component="1" d="M ${rootSvg} L ${component1EndSvg}" fill="none" stroke="#173d5f" stroke-width="10" stroke-linecap="square"/>
-    <path data-component="2" d="M ${rootSvg} L ${component2EndSvg}" fill="none" stroke="#173d5f" stroke-width="10" stroke-linecap="square"/>
+    <path data-component="1" data-orientation="horizontal" data-thickness-mm="${t1.toFixed(1)}" d="M ${rootSvg} L ${component1EndSvg} L ${component1OuterEndSvg} L ${component1OuterRootSvg} Z" fill="#173d5f" opacity=".96"/>
+    <path data-component="2" data-orientation="vertical-or-angled" data-thickness-mm="${t2.toFixed(1)}" d="M ${rootSvg} L ${component2EndSvg} L ${component2OuterEndSvg} L ${component2OuterRootSvg} Z" fill="#173d5f" opacity=".96"/>
     ${targetPath}
     <path data-weld-fill="true" d="M ${transition1Svg} Q ${controlSvg} ${transition2Svg} ${penetrationFill} Z" fill="#d7e4eb" opacity=".7"/>
     ${geometryStatusPath}
