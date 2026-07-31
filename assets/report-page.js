@@ -105,8 +105,7 @@ function optionalReportSection(title, report, definitions) {
   return `<section class="optional-report-section"><h2>${escapeHtml(title)}</h2><table class="info optional-report-table">${rows.join('')}</table></section>`;
 }
 
-function optionalReportSections(report, jointType) {
-  if (jointType !== 'Kehlnaht') return '';
+function optionalReportSections(report) {
   return [
     optionalReportSection('Ergänzende Prüfdaten', report, [
       ['manufacturer', 'Hersteller des Schweißteils'], ['inspection_organization', 'Prüfstelle / Prüforganisation'],
@@ -200,7 +199,7 @@ function reportSection({ edition, result, otherResult, report, geometry, access,
   return `<section class="report-section ${isLegacy ? 'comparison-report' : 'current-report'}" data-edition="${edition}">
     ${isTest ? '<div class="watermark">TESTBERICHT</div>' : ''}<div class="report-content">
     ${testNotice}${reportHeader(report, access, result, edition, config, today, geometry)}
-    ${optionalReportSections(report, result.joint_type)}
+    ${optionalReportSections(report)}
     <div class="traceability">Regelbibliothek ${escapeHtml(result.library_version)} | Inhaltshash ${escapeHtml(result.library_content_sha256.slice(0, 16))}… | Assistentversion ${escapeHtml(config.prototype_version)}. Die Bewertung gilt nur für den dokumentierten, zugänglichen Prüfbereich.</div>
     <h2>Vorgaben, Messung und Berechnung</h2><table class="info">${geometryRows(geometry, result.joint_type)}</table>
     ${combinedNotice}

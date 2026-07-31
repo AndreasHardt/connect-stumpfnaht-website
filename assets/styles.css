@@ -559,7 +559,7 @@ button.primary,button.secondary { padding:9px 14px; }
   .norm-difference-note { grid-column:2; }
 }
 
-/* Optionale VT-Prüfdaten – zunächst ausschließlich für die Kehlnaht */
+/* Optionale VT-Prüfdaten für Kehlnaht und Stumpfnaht */
 .general-data-grid > .inspector-entry { min-width:0; }
 .inspector-entry > label { display:block; }
 .optional-data-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }

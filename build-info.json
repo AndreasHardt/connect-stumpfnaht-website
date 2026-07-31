@@ -9,9 +9,9 @@
   "library_version": "0.8 – Datenqualitätsaudit, Scope-Bereinigung und JSON-Exportvorbereitung",
   "library_content_sha256": "f6d86d698e6dbcad27912cc67613572de9c9dd23cab168c59dcb0499963f6360",
   "published_library_sha256": "1c1ef7b1b7dfa9376928091e0cbc51d64b888377e33c2b61ccee59680502d169",
-  "built_at": "2026-07-31T18:36:14.008Z",
+  "built_at": "2026-07-31T19:10:28.865Z",
   "files": {
-    "assets/app.js": "a8d9faa04c4784a6f426f73d78e294e5bf25a0205f31989388f00be1c901c882",
+    "assets/app.js": "d68aa8daba478273c3324a33792c8cee16a87639bb11f5ea7162973ba1d16fd5",
     "assets/butt-geometry-svg.js": "fc4fa8f283a2ee2baed25cf1f4ec68fb64430c7bbfba41b828c5fbf10db97f65",
     "assets/criterion-filter.js": "d6b249169afde58daa36f76cc5a4501cab5c7acfed45774b0cd793b7ed890d8a",
     "assets/engine.js": "1f08ac66c1c3ce8cde36fec87ef97e2fadb6bd893a7c912a6673e751992e7ef0",
@@ -20,15 +20,15 @@
     "assets/geometry.js": "5d8f886d07c119bf1dc20cb4826d79f06fe79c6c07dccc0c8966b7647a66c85b",
     "assets/graphics/README.md": "6659ccf0c9cf99a9f2c9244184c546a2599f50604072523d5e00ece6b6930f96",
     "assets/graphics/hero-industrial-hall.jpg": "d4a983a8d9f737bd28840bbe931217dd56afa5c0433061fc6006330cd5157038",
-    "assets/report-page.js": "0cf0a8311ee526b0fe23e6a8ca95949ca6fa94a0fd6b3e511f07ad8fc1cfe873",
+    "assets/report-page.js": "fa385dac50e71e4109476bc1cec2e4c7472f672c84b5b843722ddbe0c2256004",
     "assets/report.css": "fe4a0da03b7112d8edeaa60e684d8940ef74d11c1983a5b6ae9d70619ab65de9",
     "assets/report.js": "7e2eaafd8c9f005c0b2137e1c09f93fc1009a1d9d0172c74d74f9ba7f6d63ecd",
     "assets/result-format.js": "044d1e9cde1fd44944c338db6a2ff7335e49d274a1e7cf4b08d69751fcb696f3",
-    "assets/styles.css": "734273408d6ce1c93a00696705361fe9ee3510b52f426e8d2553cb2aaefd4c5d",
+    "assets/styles.css": "c3b604e49f688d678422c98cd1ad6c1f7b9a18bb15c31676955aa639d2497c70",
     "assets/target-lock.js": "f0f768a8f797a036f6da29e2b66f430ade0abaa24c1a028e9829243e47adb721",
     "data/rules.v1.json": "1c1ef7b1b7dfa9376928091e0cbc51d64b888377e33c2b61ccee59680502d169",
     "data/rules.v1.json.gz": "48e0088eee2c4dea58c04fd7587828a603ad2afffc0a074ace05221105f7c21a",
     "data/ui-config.json": "6bbfa708c3d53e438a1e9339fce05036a4b634e06e4eb5d942ac84ed07a6537e",
-    "report.html": "ac2366369695be7729712db456e9cc03d4409b4a46908ae8a8e059b71c02203e"
+    "report.html": "9f288598cdbf7ea8c1489e964e2d512e330bfa6260b1ad172a2e3b807584af39"
   }
 }

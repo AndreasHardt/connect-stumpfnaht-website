@@ -72,7 +72,6 @@ const OPTIONAL_REPORT_FIELD_IDS = [
 ];
 
 function optionalReportData() {
-  if (jointType() !== 'fillet') return {};
   return Object.fromEntries(OPTIONAL_REPORT_FIELD_IDS.flatMap(id => {
     const value = $(`#${id}`)?.value?.trim() || '';
     return value ? [[id, value]] : [];
@@ -340,7 +339,6 @@ function updateJointVisuals() {
   $('#general-s-field')?.classList.toggle('hidden', type !== 'butt');
   $('#general-misalignment-variant-field')?.classList.toggle('hidden', type !== 'butt');
   $('#access-face-field')?.classList.toggle('hidden', type === 'fillet');
-  $$('.fillet-vt-details, .fillet-only-control').forEach(element => element.classList.toggle('hidden', type !== 'fillet'));
   if (type === 'fillet') $('#access_face').checked = true;
   renderGeometryFields();
   renderCriteria();
