@@ -5,7 +5,7 @@ import {
   assessmentText,
   statusLabel,
 } from './result-format.js?v=044d1e9cde1f';
-import { filletGeometrySvg } from './fillet-geometry-svg.js?v=d9fdfae0a349';
+import { filletGeometrySvg } from './fillet-geometry-svg.js?v=d7a8dbf377ac';
 import { buttGeometrySvg } from './butt-geometry-svg.js';
 
 const inspectionLabels = {
@@ -51,9 +51,9 @@ function geometryRows(geometry, jointType) {
     const faceValue = value => geometry.accessibility?.face === false ? 'schematisch – nicht geprüft' : mm(value);
     const rootValue = value => geometry.accessibility?.root === false ? 'schematisch – nicht geprüft' : mm(value);
     return `<tr><td>Bauteildicke t1</td><td>${mm(t1)}</td><td>Bauteildicke t2</td><td>${mm(t2)}</td></tr>
-      <tr><td>Nahtdicke s</td><td>${mm(geometry.s)}</td><td>Kantenversatz hKV (T2 höher)</td><td>${mm(geometry.hKV)}</td></tr>
-      <tr><td>Breite Decklage</td><td>${faceValue(geometry.bD)}</td><td>Decklagenüberhöhung</td><td>${faceValue(geometry.hD)}</td></tr>
-      <tr><td>Breite Wurzel</td><td>${rootValue(geometry.bW)}</td><td>Wurzelüberhöhung</td><td>${rootValue(geometry.hW)}</td></tr>
+      <tr><td>Nahtdicke s</td><td>${mm(geometry.s)}</td><td>Decklagenüberhöhung</td><td>${faceValue(geometry.hD)}</td></tr>
+      <tr><td>Decklagenbreite</td><td>${faceValue(geometry.bD)}</td><td>Kantenversatz</td><td>${mm(geometry.hKV)}</td></tr>
+      <tr><td>Wurzelbreite</td><td>${rootValue(geometry.bW)}</td><td>Wurzelüberhöhung</td><td>${rootValue(geometry.hW)}</td></tr>
       <tr><td>Ausführung Kantenversatz</td><td>${escapeHtml(geometry.misalignment_variant || '5071')}</td><td>Innere Darstellungsbreite bI</td><td>3,0 mm</td></tr>`;
   }
   const profile = profileLabels[geometry.profile_class] || '—';
@@ -161,7 +161,7 @@ function reportSection({ edition, result, otherResult, report, geometry, access,
     <div class="table-context">SOLL bezeichnet die Anforderung, IST den festgestellten Befund oder Messwert. Berechnungsgrundlage und Normvergleich sind kompakt in Kriterium beziehungsweise Status zusammengeführt.</div>
     <table class="result-table"><thead><tr><th>Nr.</th><th>Kriterium / Berechnungsgrundlage</th><th>SOLL</th><th>IST</th><th>Bemerkung</th><th>Status</th></tr></thead><tbody>${resultRows(result, otherResult, edition)}</tbody></table>
     ${report.notes ? `<h2 class="report-notes-title">Bemerkungen</h2><div class="report-notes">${escapeHtml(report.notes)}</div>` : ''}
-    <div class="note report-responsibility"><strong>Verantwortlichkeit:</strong> Für die eingegebenen Daten, die fachliche Prüfung und den Inhalt dieses Berichts ist der im Bericht genannte Prüfer verantwortlich. Andreas Hardt ist Bereitsteller des digitalen Werkzeugs und nicht Prüfer dieses Berichts.</div>
+    <div class="note report-responsibility"><strong>Verantwortlichkeit:</strong> Der Prüfer ist für Inhalt und Richtigkeit dieses Berichts verantwortlich.</div>
     <div class="signature"><div><span class="signature-line"></span><div><strong>Prüfer:</strong> ${escapeHtml(report.inspector || '—')} <strong>Datum:</strong> ${escapeHtml(today)}</div></div></div>
     </div>
     <div class="report-actions"><button class="print" type="button" data-print-edition="${edition}">Bericht ${edition} drucken</button></div>
