@@ -37,18 +37,23 @@ function statusStyle(status, accessible) {
 }
 
 function reinforcementIndicators(feature, left, right, direction, style) {
-  const horizontal = 18;
-  const vertical = 16 * direction;
+  const horizontal = 24;
+  const vertical = 22 * direction;
   const leftPath = `M ${(left.x - horizontal).toFixed(2)} ${left.y.toFixed(2)} L ${left.x.toFixed(2)} ${left.y.toFixed(2)} L ${left.x.toFixed(2)} ${(left.y + vertical).toFixed(2)}`;
   const rightPath = `M ${(right.x + horizontal).toFixed(2)} ${right.y.toFixed(2)} L ${right.x.toFixed(2)} ${right.y.toFixed(2)} L ${right.x.toFixed(2)} ${(right.y + vertical).toFixed(2)}`;
-  const attributes = `data-status-feature="${feature}" data-status="${style.normalized}" data-status-horizontal-mirrors-height="true" fill="none" stroke="${style.color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" ${style.dash}`;
-  return `<path ${attributes} data-status-side="left" d="${leftPath}"/>
-    <path ${attributes} data-status-side="right" d="${rightPath}"/>`;
+  const halo = `fill="none" stroke="#ffffff" stroke-opacity=".9" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"`;
+  const attributes = `data-status-feature="${feature}" data-status="${style.normalized}" data-status-horizontal-mirrors-height="true" fill="none" stroke="${style.color}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" ${style.dash}`;
+  return `<g data-status-indicators="${feature}">
+    <path data-status-halo="left" ${halo} d="${leftPath}"/>
+    <path data-status-halo="right" ${halo} d="${rightPath}"/>
+    <path ${attributes} data-status-side="left" d="${leftPath}"/>
+    <path ${attributes} data-status-side="right" d="${rightPath}"/>
+  </g>`;
 }
 
 export function normalizeButtGeometry(geometry = {}) {
-  const t1 = Math.max(0.5, finite(geometry.t1 ?? geometry.t, 8));
-  const t2 = Math.max(0.5, finite(geometry.t2 ?? geometry.t, 8));
+  const t1 = Math.min(30, Math.max(3, finite(geometry.t1 ?? geometry.t, 10)));
+  const t2 = Math.min(30, Math.max(3, finite(geometry.t2 ?? geometry.t, 10)));
   const hKV = Math.max(0, finite(geometry.hKV ?? geometry.misalignment_h, 0));
   const bD = Math.max(3, finite(geometry.bD ?? geometry.butt_reinforcement_width_b, 10));
   const hD = Math.max(0, finite(geometry.hD ?? geometry.butt_reinforcement_h, 1));
