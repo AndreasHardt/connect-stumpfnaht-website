@@ -53,23 +53,40 @@ jobs:
         working-directory: _private
         run: APP_MODE="$APP_MODE" npm run build:stumpfnaht
 
-      - name: Stumpfnaht-Anwendung prüfen und übernehmen
+      - name: Bereinigten Stumpfnaht-Build prüfen und übernehmen
         shell: bash
         run: |
           set -euo pipefail
           source_dir="_private/published/$PUBLISH_TARGET"
           test -f "$source_dir/index.html"
           test -f "$source_dir/assets/app.js"
+          test -f "$source_dir/assets/secure-api-client.js"
           test -f "$source_dir/assets/target-lock.js"
-          test -f "$source_dir/data/rules.v1.json"
-          test -f "$source_dir/data/ui-config.json"
           test -f "$source_dir/build-info.json"
           test -f "$source_dir/CNAME"
           grep -qx "$EXPECTED_DOMAIN" "$source_dir/CNAME"
           grep -q '"app_target": "stumpfnaht"' "$source_dir/build-info.json"
-          grep -q '"locked_joint_type": "butt"' "$source_dir/data/ui-config.json"
+          grep -q '"locked_joint_type": "butt"' "$source_dir/build-info.json"
+          grep -q '"calculation_location": "protected-cloudflare-worker"' "$source_dir/build-info.json"
+          grep -q '"public_rule_library": false' "$source_dir/build-info.json"
+          grep -q '"public_evaluation_engine": false' "$source_dir/build-info.json"
           grep -q 'value="butt" checked' "$source_dir/index.html"
           grep -q 'TESTSYSTEM' "$source_dir/index.html"
+
+          forbidden=(
+            "data/rules.v1.json"
+            "data/rules.v1.json.gz"
+            "data/ui-config.json"
+            "assets/engine.js"
+            "assets/evaluation.js"
+            "assets/geometry.js"
+          )
+          for path in "${forbidden[@]}"; do
+            if [ -e "$source_dir/$path" ]; then
+              echo "::error::Vertrauliches Artefakt im öffentlichen Build: $path"
+              exit 1
+            fi
+          done
 
           rm -rf _site
           mkdir _site
@@ -83,6 +100,7 @@ jobs:
             -exec rm -rf {} +
 
           cp -a _site/. .
+          touch .nojekyll
           rm -rf _private _site
           rm -f .htaccess
 
@@ -97,5 +115,5 @@ jobs:
             echo 'Keine Änderungen zu veröffentlichen.'
             exit 0
           fi
-          git commit -m 'Connect-Stumpfnaht aus privatem Quellstand veröffentlichen'
+          git commit -m 'Connect-Stumpfnaht aus privatem, geschütztem Quellstand veröffentlichen'
           git push origin main
