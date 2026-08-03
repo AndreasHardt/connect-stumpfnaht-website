@@ -1,4 +1,3 @@
-import { computeFilletNominalMeasurements } from './geometry.js?v=5d8f886d07c1';
 
 function finiteNumber(value) {
   const parsed = Number(value);
@@ -69,7 +68,7 @@ export function filletGeometrySvg(geometry, nominalA, geometryStatus = 'incomple
   const {root, transition1, transition2, middle, control} = model.points;
   const t1 = Math.min(30, Math.max(3, finiteNumber(geometry.t1 ?? geometry.t) ?? 10));
   const t2 = Math.min(30, Math.max(3, finiteNumber(geometry.t2 ?? geometry.t) ?? 10));
-  const nominalGeometry = computeFilletNominalMeasurements(nominalA, model.gamma);
+  const nominalGeometry = geometry.nominal || {valid:false, a:null, z1:null, z2:null};
   const targetLeg = nominalGeometry.valid ? nominalGeometry.z1 : null;
   const target1 = targetLeg === null ? null : {x: targetLeg / Math.sin(model.gammaRad), y: 0};
   const target2 = targetLeg === null ? null : {x: targetLeg / Math.tan(model.gammaRad), y: targetLeg};

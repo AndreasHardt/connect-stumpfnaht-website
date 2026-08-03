@@ -1,7 +1,6 @@
-import { createEvaluationService } from './evaluation.js?v=35f3a22547ca';
+import { createRemoteEvaluationService, loadSecureBootstrap, GEOMETRY_TOLERANCE_MM } from './secure-api-client.js?v=b79a2ff382a2';
 import { openReport } from './report.js?v=7e2eaafd8c9f';
-import { computeFilletGeometry, computeFilletNominalMeasurements, GEOMETRY_TOLERANCE_MM } from './geometry.js?v=5d8f886d07c1';
-import { filletGeometrySvg } from './fillet-geometry-svg.js?v=d7a8dbf377ac';
+import { filletGeometrySvg } from './fillet-geometry-svg.js?v=3f0c695d871c';
 import { buttGeometrySvg } from './butt-geometry-svg.js?v=fc4fa8f283a2';
 
 const state = {
@@ -14,6 +13,7 @@ const state = {
   buttGeometryStatuses: {deck:'incomplete', root:'incomplete'},
   liveTimer: null,
   liveBusy: false,
+  geometryRequest: 0,
   initialized: false,
   filletMeasurements: {
     values: {z1:'', z2:'', m:''},
@@ -33,7 +33,8 @@ const inspectionLabels = {
   complete: 'vollständig', one_sided: 'einseitig', not_assessable: 'nicht bewertbar'
 };
 const aASourceLabels = {
-  legs: 'aus dem kleineren Schenkel', middle: 'aus dem mittleren Messwert', direct: 'direkt gemessen'
+  legs: 'aus dem kleineren Schenkel', middle: 'aus dem mittleren Messwert', direct: 'direkt gemessen',
+  model: 'aus dem maßgebenden eingeschlossenen Dreieck'
 };
 const profileLabels = {
   straight: 'gerades Profil', convex: 'Überhöhung', concave: 'Unterwölbung'
@@ -136,6 +137,7 @@ function governingParentThickness() {
 
 function filletGeometryInput() {
   return {
+    a: numberOrNull(geometryValue('a')),
     z1: numberOrNull(geometryValue('z1')),
     z2: numberOrNull(geometryValue('z2')),
     m: numberOrNull(geometryValue('m')),
@@ -164,7 +166,7 @@ function renderGeometrySummary(result) {
     : '';
   summary.innerHTML = `<strong>Automatisch berechnete Geometrie:</strong><br>
     Nahtbreite b = <strong>${formatMm(result.b)}</strong><br>
-    Schenkelbezogene Kehlnahtdicke az = <strong>${formatMm(result.az)}</strong><br>
+    Kehlnahtdicke az aus dem kleineren Schenkel = <strong>${formatMm(result.az)}</strong><br>
     Vergleichshöhe m0 = <strong>${formatMm(result.m0)}</strong><br>
     Ungleichschenkligkeit hz = <strong>${formatMm(result.asymmetryH)}</strong><br>
     Profilabweichung senkrecht zu b = <strong>${profileText}</strong><br>
@@ -225,48 +227,51 @@ function updateFilletGeometryStatus(status) {
   }
 }
 
-function refreshGeometry({schedule = true} = {}) {
-  if (jointType() !== 'fillet') {
-    state.geometry = null;
-    state.buttGeometryStatuses = {deck:'incomplete', root:'incomplete'};
-    renderButtGeometry();
-    const summary = $('#geometry-formula');
-    if (summary) summary.innerHTML = '<strong>Stumpfnaht im I-Stoß:</strong><br>Kantenversatz, Decklagen- und Wurzelkontur werden aus den zentralen Messwerten dargestellt. Die farbigen Winkel an linker und rechter Kante zeigen den Status der jeweiligen Überhöhung; der waagerechte Teil übernimmt denselben Status. Nicht zugängliche Seiten erscheinen grau gestrichelt.';
+async function refreshGeometry({schedule = true} = {}) {
+  if (!state.service) return;
+  const requestId = ++state.geometryRequest;
+  try {
+    const result = jointType() === 'fillet'
+      ? {...await state.service.computeFilletGeometry(filletGeometryInput()), ...parentThicknessValues()}
+      : await state.service.computeFilletGeometry({
+          joint_type: 'butt',
+          geometry: currentButtGeometry(),
+          accessibility: {face: $('#access_face').checked, root: $('#access_root').checked},
+          statuses: state.buttGeometryStatuses,
+        });
+    if (requestId !== state.geometryRequest) return;
+    state.geometry = result;
+    if (jointType() === 'fillet') {
+      state.geometryStatus = 'incomplete';
+      $('#geometry-schematic').innerHTML = filletGeometrySvg(result, numberOrNull(geometryValue('a')), state.geometryStatus);
+      const bField = $('#geo-b');
+      const aAField = $('#geo-aA');
+      if (bField) bField.value = Number.isFinite(result.b) ? result.b.toFixed(1) : '';
+      if (aAField) aAField.value = Number.isFinite(result.aA) ? result.aA.toFixed(1) : '';
+      $('#direct-h-field')?.classList.toggle('hidden', !result.needsDirectH);
+      $('#direct-aA-field')?.classList.toggle('hidden', !result.needsDirectAA);
+      renderGeometrySummary(result);
+    } else {
+      renderButtGeometry();
+      const summary = $('#geometry-formula');
+      if (summary) summary.innerHTML = '<strong>Stumpfnaht im I-Stoß:</strong><br>Kantenversatz, Decklagen- und Wurzelkontur werden aus den zentralen Messwerten dargestellt. Die farbigen Winkel an linker und rechter Kante zeigen den Status der jeweiligen Überhöhung; der waagerechte Teil übernimmt denselben Status. Nicht zugängliche Seiten erscheinen grau gestrichelt.';
+    }
     updateConditionalFields();
     if (schedule) scheduleLiveEvaluation();
-    return;
+  } catch (error) {
+    if (requestId === state.geometryRequest) showAlert([String(error.message || error)]);
   }
-  state.geometryStatus = 'incomplete';
-  const result = {
-    ...computeFilletGeometry(filletGeometryInput()),
-    ...parentThicknessValues(),
-  };
-  state.geometry = result;
-  $('#geometry-schematic').innerHTML = filletGeometrySvg(result, numberOrNull(geometryValue('a')), state.geometryStatus);
-  const bField = $('#geo-b');
-  const aAField = $('#geo-aA');
-  if (bField) bField.value = Number.isFinite(result.b) ? result.b.toFixed(1) : '';
-  if (aAField) aAField.value = Number.isFinite(result.aA) ? result.aA.toFixed(1) : '';
-  $('#direct-h-field')?.classList.toggle('hidden', !result.needsDirectH);
-  $('#direct-aA-field')?.classList.toggle('hidden', !result.needsDirectAA);
-  renderGeometrySummary(result);
-  updateConditionalFields();
-  if (schedule) scheduleLiveEvaluation();
 }
 
 const FILLET_MEASUREMENT_IDS = ['z2', 'm', 'z1'];
 
-function nominalFilletMeasurementValues() {
-  const target = computeFilletNominalMeasurements(
-    numberOrNull(geometryValue('a')),
-    numberOrNull(geometryValue('angle')),
-  );
+async function nominalFilletMeasurementValues() {
+  const target = await state.service.computeFilletNominalMeasurements({
+    a: numberOrNull(geometryValue('a')),
+    gamma: numberOrNull(geometryValue('angle')),
+  });
   if (!target.valid) return null;
-  return {
-    z1: target.z1.toFixed(1),
-    z2: target.z2.toFixed(1),
-    m: target.m.toFixed(1),
-  };
+  return {z1: target.z1.toFixed(1), z2: target.z2.toFixed(1), m: target.m.toFixed(1)};
 }
 
 function captureFilletMeasurementValues(container = $('#geometry-fields')) {
@@ -277,8 +282,8 @@ function captureFilletMeasurementValues(container = $('#geometry-fields')) {
   });
 }
 
-function syncAutomaticFilletMeasurements({refresh = true} = {}) {
-  const target = nominalFilletMeasurementValues();
+async function syncAutomaticFilletMeasurements({refresh = true} = {}) {
+  const target = await nominalFilletMeasurementValues();
   if (target) {
     FILLET_MEASUREMENT_IDS.forEach(id => {
       if (!state.filletMeasurements.automatic[id]) return;
@@ -294,13 +299,13 @@ function syncAutomaticFilletMeasurements({refresh = true} = {}) {
   if (refresh) refreshGeometry();
 }
 
-function renderGeometryFields() {
+async function renderGeometryFields() {
   const type = jointType();
   const container = $('#geometry-fields');
   const existing = {};
   $$('[id^="geo-"]', container).forEach(input => { existing[input.id.replace('geo-', '')] = input.value; });
   captureFilletMeasurementValues(container);
-  syncAutomaticFilletMeasurements({refresh:false});
+  await syncAutomaticFilletMeasurements({refresh:false});
   const fields = type === 'butt' ? [
     {id:'hD', label:'Decklagenüberhöhung', unit:'mm', value:existing.hD || '1.0', min:0, max:99.9, step:.1, hidden:!$('#access_face').checked, accessSide:'face'},
     {id:'bD', label:'Decklagenbreite', unit:'mm', value:existing.bD || '10.0', min:.1, max:99.9, step:.1, hidden:!$('#access_face').checked, accessSide:'face'},
@@ -328,10 +333,10 @@ function renderGeometryFields() {
       refreshGeometry();
     });
   });
-  refreshGeometry({schedule:false});
+  await refreshGeometry({schedule:false});
 }
 
-function updateJointVisuals() {
+async function updateJointVisuals() {
   const type = jointType();
   $('#geometry-schematic').innerHTML = type === 'butt' ? jointSvg(type) : '';
   $('#general-a-field')?.classList.toggle('hidden', type !== 'fillet');
@@ -340,7 +345,7 @@ function updateJointVisuals() {
   $('#general-misalignment-variant-field')?.classList.toggle('hidden', type !== 'butt');
   $('#access-face-field')?.classList.toggle('hidden', type === 'fillet');
   if (type === 'fillet') $('#access_face').checked = true;
-  renderGeometryFields();
+  await renderGeometryFields();
   renderCriteria();
   scheduleLiveEvaluation();
 }
@@ -553,7 +558,6 @@ function systemValuesForCriterion(ruleId) {
 }
 
 function collectPayload() {
-  refreshGeometry({schedule:false});
   const criteria = {};
   $$('[data-criterion]').forEach(card => {
     const ruleId = card.dataset.criterion;
@@ -621,7 +625,6 @@ function collectPayload() {
 }
 
 function frontendValidation() {
-  refreshGeometry({schedule:false});
   const errors = [];
   if (!$('#access_face').checked && !$('#access_root').checked) errors.push('Mindestens eine Prüfseite muss zugänglich sein.');
   const {t1, t2} = parentThicknessValues();
@@ -735,6 +738,7 @@ function renderResults(data) {
 
 async function evaluateLive() {
   if (!state.initialized || !state.service || state.liveBusy) return;
+  await refreshGeometry({schedule:false});
   const errors = frontendValidation();
   if (errors.length) {
     showAlert([]);
@@ -744,7 +748,7 @@ async function evaluateLive() {
   state.liveBusy = true;
   try {
     const payload = collectPayload();
-    const data = state.service.evaluatePayload(payload);
+    const data = await state.service.evaluatePayload(payload);
     state.lastPayload = payload;
     state.lastResult = data;
     renderResults(data);
@@ -832,20 +836,15 @@ async function init() {
   $('#compare_2014').checked = false;
   $('#access_root').checked = true;
   try {
-    const [configResponse, libraryResponse] = await Promise.all([
-      fetch('./data/ui-config.json', {cache: 'no-store'}),
-      fetch('./data/rules.v1.json', {cache: 'no-store'})
-    ]);
-    if (!configResponse.ok || !libraryResponse.ok) throw new Error('Regel- oder UI-Konfiguration konnte nicht geladen werden.');
-    const [config, library] = await Promise.all([configResponse.json(), libraryResponse.json()]);
-    state.service = createEvaluationService(library, config);
+    const bootstrap = await loadSecureBootstrap();
+    state.service = createRemoteEvaluationService(bootstrap);
     state.config = state.service.config;
   } catch (error) {
     showAlert([String(error.message || error)]);
     $('#download-pdf').disabled = true;
     return;
   }
-  $('#footer-library').textContent = `Regelbibliothek ${state.config.library.version} · ${state.config.criteria.length} aktive V1-Kriterien · Berechnung lokal im Browser`;
+  $('#footer-library').textContent = `Regelbibliothek ${state.config.library.version} · ${state.config.criteria.length} aktive V1-Kriterien · geschützte serverseitige Berechnung`;
   document.body.classList.add((state.config.app_mode || 'test') !== 'production' ? 'test-mode' : 'production-mode');
   updateJointVisuals();
   bindStaticInputs();
