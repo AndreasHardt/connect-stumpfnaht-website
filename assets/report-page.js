@@ -5,7 +5,7 @@ import {
   assessmentText,
   statusLabel,
 } from './result-format.js?v=044d1e9cde1f';
-import { filletGeometrySvg } from './fillet-geometry-svg.js?v=d7a8dbf377ac';
+import { filletGeometrySvg } from './fillet-geometry-svg.js?v=3f0c695d871c';
 import { buttGeometrySvg } from './butt-geometry-svg.js?v=fc4fa8f283a2';
 
 const inspectionLabels = {
@@ -17,7 +17,7 @@ const aASourceLabels = {
   legs: 'aus dem kleineren Schenkel',
   middle: 'aus dem mittleren Messwert',
   direct: 'direkt gemessen',
-  model: 'aus der interpolierten Modellkontur',
+  model: 'aus dem maßgebenden eingeschlossenen Dreieck',
 };
 const profileLabels = {
   straight: 'gerades Profil',
@@ -64,7 +64,7 @@ function geometryRows(geometry, jointType) {
     <tr><td>Schenkellänge z2</td><td>${mm(geometry.z2)}</td><td>Höhenmesswert m</td><td>${mm(geometry.m)}</td></tr>
     <tr><td>Schenkellänge z1</td><td>${mm(geometry.z1)}</td><td>Spalt h an der Wurzelseite</td><td>${geometry.accessibility?.root === false ? 'nicht geprüft' : mm(geometry.fitup_gap_h)}</td></tr>
     <tr><td>Vergleichshöhe m0</td><td>${mm(geometry.m0)}</td><td>Nahtbreite b</td><td>${mm(geometry.b)}</td></tr>
-    <tr><td>Schenkelbezogene Kehlnahtdicke az</td><td>${mm(geometry.az)}</td><td>Tatsächliche Kehlnahtdicke aA</td><td>${mm(geometry.aA)}</td></tr>
+    <tr><td>Kehlnahtdicke az aus dem kleineren Schenkel</td><td>${mm(geometry.az)}</td><td>Tatsächliche Kehlnahtdicke aA</td><td>${mm(geometry.aA)}</td></tr>
     <tr><td>Profilabweichung</td><td>${escapeHtml(profile)} | ${mm(geometry.profile_h)}</td><td>Ungleichschenkligkeit hz</td><td>${mm(geometry.asymmetry_h)}</td></tr>
     <tr><td>Ermittlungsart aA</td><td>${escapeHtml(source)}</td><td>Direkt gemessenes aA</td><td>${mm(geometry.direct_aA)}</td></tr>
     <tr><td>Direkt gemessene Überhöhung h</td><td>${mm(geometry.direct_h)}</td><td>Messtechnische Toleranz</td><td>${mm(geometry.tolerance_mm)}</td></tr>
