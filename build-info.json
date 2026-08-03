@@ -1,0 +1,30 @@
+{
+  "application": "Hardt-Wiehl Connect – Stumpfnahtbewertung",
+  "version": "0.3.0",
+  "app_target": "stumpfnaht",
+  "app_mode": "test",
+  "locked_joint_type": "butt",
+  "domain": "stumpfnaht.hardt-wiehl.de",
+  "criteria": 21,
+  "library_version": "0.8 – Datenqualitätsaudit, Scope-Bereinigung und JSON-Exportvorbereitung",
+  "calculation_location": "protected-cloudflare-worker",
+  "public_rule_library": false,
+  "public_evaluation_engine": false,
+  "built_at": "2026-08-03T18:48:55.770Z",
+  "files": {
+    "assets/app.js": "3c5f6e8abdbc32aae14040873f87de84787b76fbac98fd16b433c3a8fa04d014",
+    "assets/butt-geometry-svg.js": "fc4fa8f283a2ee2baed25cf1f4ec68fb64430c7bbfba41b828c5fbf10db97f65",
+    "assets/criterion-filter.js": "d6b249169afde58daa36f76cc5a4501cab5c7acfed45774b0cd793b7ed890d8a",
+    "assets/fillet-geometry-svg.js": "3f0c695d871c9ee4ceb26bec2c1c43e9117b178b715de8669779a38847d92580",
+    "assets/graphics/README.md": "6659ccf0c9cf99a9f2c9244184c546a2599f50604072523d5e00ece6b6930f96",
+    "assets/graphics/hero-industrial-hall.jpg": "d4a983a8d9f737bd28840bbe931217dd56afa5c0433061fc6006330cd5157038",
+    "assets/report-page.js": "bea3423e73b150bebd3646e4c9205e6a3659d27635e814bf01fcc9a8e385d66d",
+    "assets/report.css": "fe4a0da03b7112d8edeaa60e684d8940ef74d11c1983a5b6ae9d70619ab65de9",
+    "assets/report.js": "7e2eaafd8c9f005c0b2137e1c09f93fc1009a1d9d0172c74d74f9ba7f6d63ecd",
+    "assets/result-format.js": "044d1e9cde1fd44944c338db6a2ff7335e49d274a1e7cf4b08d69751fcb696f3",
+    "assets/secure-api-client.js": "b79a2ff382a28263951abcb8ed83fb82400627e163dd3362b360da9da3c33b20",
+    "assets/styles.css": "c3b604e49f688d678422c98cd1ad6c1f7b9a18bb15c31676955aa639d2497c70",
+    "assets/target-lock.js": "f0f768a8f797a036f6da29e2b66f430ade0abaa24c1a028e9829243e47adb721",
+    "report.html": "f8aec01964e0413373dbcce78df0f1c2fa6e8e088fd5852acec6058c318ed55a"
+  }
+}

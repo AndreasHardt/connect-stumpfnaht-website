@@ -1,0 +1,119 @@
+name: Connect-Stumpfnaht veröffentlichen
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: connect-stumpfnaht-publish
+  cancel-in-progress: false
+
+env:
+  PUBLISH_TARGET: stumpfnaht
+  EXPECTED_DOMAIN: stumpfnaht.hardt-wiehl.de
+  APP_MODE: test
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Öffentliches Repository auschecken
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Zugriffstoken prüfen
+        env:
+          CONNECT_CODE_TOKEN: ${{ secrets.CONNECT_CODE_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$CONNECT_CODE_TOKEN" ]; then
+            echo "::error::Repository-Secret CONNECT_CODE_TOKEN fehlt oder ist leer."
+            exit 1
+          fi
+
+      - name: Privates Connect-Repository lesen
+        uses: actions/checkout@v4
+        with:
+          repository: AndreasHardt/connect.hardt-wiehl
+          token: ${{ secrets.CONNECT_CODE_TOKEN }}
+          path: _private
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Stumpfnaht-Anwendung aus den privaten Quellen bauen
+        working-directory: _private
+        run: APP_MODE="$APP_MODE" npm run build:stumpfnaht
+
+      - name: Bereinigten Stumpfnaht-Build prüfen und übernehmen
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_dir="_private/published/$PUBLISH_TARGET"
+          test -f "$source_dir/index.html"
+          test -f "$source_dir/assets/app.js"
+          test -f "$source_dir/assets/secure-api-client.js"
+          test -f "$source_dir/assets/target-lock.js"
+          test -f "$source_dir/build-info.json"
+          test -f "$source_dir/CNAME"
+          grep -qx "$EXPECTED_DOMAIN" "$source_dir/CNAME"
+          grep -q '"app_target": "stumpfnaht"' "$source_dir/build-info.json"
+          grep -q '"locked_joint_type": "butt"' "$source_dir/build-info.json"
+          grep -q '"calculation_location": "protected-cloudflare-worker"' "$source_dir/build-info.json"
+          grep -q '"public_rule_library": false' "$source_dir/build-info.json"
+          grep -q '"public_evaluation_engine": false' "$source_dir/build-info.json"
+          grep -q 'value="butt" checked' "$source_dir/index.html"
+          grep -q 'TESTSYSTEM' "$source_dir/index.html"
+
+          forbidden=(
+            "data/rules.v1.json"
+            "data/rules.v1.json.gz"
+            "data/ui-config.json"
+            "assets/engine.js"
+            "assets/evaluation.js"
+            "assets/geometry.js"
+          )
+          for path in "${forbidden[@]}"; do
+            if [ -e "$source_dir/$path" ]; then
+              echo "::error::Vertrauliches Artefakt im öffentlichen Build: $path"
+              exit 1
+            fi
+          done
+
+          rm -rf _site
+          mkdir _site
+          cp -a "$source_dir/." _site/
+
+          find . -mindepth 1 -maxdepth 1 \
+            ! -name .git \
+            ! -name .github \
+            ! -name _private \
+            ! -name _site \
+            -exec rm -rf {} +
+
+          cp -a _site/. .
+          touch .nojekyll
+          rm -rf _private _site
+          rm -f .htaccess
+
+      - name: Änderungen veröffentlichen
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Connect Website Automatik'
+          git config user.email 'iwe@hardt-wiehl.de'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'Keine Änderungen zu veröffentlichen.'
+            exit 0
+          fi
+          git commit -m 'Connect-Stumpfnaht aus privatem, geschütztem Quellstand veröffentlichen'
+          git push origin main

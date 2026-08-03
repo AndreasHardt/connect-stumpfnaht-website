@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173d5f">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <title>Stumpfnahtbewertung | Hardt-Wiehl Connect</title>
+  <link rel="stylesheet" href="./assets/styles.css?v=c3b604e49f68">
+</head>
+<body>
+<div class="test-system-banner" id="test-system-banner"><strong>TESTSYSTEM</strong><span>Bewertungen und Berichte sind noch nicht zur produktiven Verwendung freigegeben.</span></div>
+<header class="site-header">
+  <div class="site-header-inner">
+    <div class="brand-block">
+      <div>
+        <h1 class="brand">Stumpfnahtbewertung</h1>
+        <p class="subtitle">Erkennen. Messen. Bewerten.</p>
+        <p class="header-standard">Bewertung nach DIN EN ISO 5817:2023 <span aria-hidden="true">|</span> Vergleich mit Ausgabe 2014</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="page-shell">
+
+  <nav class="stepper panel" aria-label="Sprungnavigation">
+    <button class="step active" type="button" data-target="inspection-header"><span>1</span><strong>Prüfdaten</strong></button>
+    <button class="step" type="button" data-target="base-geometry"><span>2</span><strong>Messdaten</strong></button>
+    <button class="step" type="button" data-target="inspection-criteria"><span>3</span><strong>Prüfkriterien</strong></button>
+    <button class="step" type="button" data-target="evaluation-result"><span>4</span><strong>Ergebnis</strong></button>
+  </nav>
+
+  <div id="alert" class="alert hidden" role="alert"></div>
+
+  <section class="panel step-panel area-1" id="inspection-header" data-panel="1">
+    <div class="section-heading"><div><h2>Prüfdaten</h2></div></div>
+
+    <div class="choice-grid joint-type-grid">
+      <fieldset>
+        <legend>Nahtart</legend>
+        <label class="choice-card"><input type="radio" name="joint_type" value="fillet"><span class="choice-icon fillet-icon"></span><span><strong>Kehlnaht</strong><small>Geometrie mit a, aA, z1, z2 und m</small></span></label>
+        <label class="choice-card"><input type="radio" name="joint_type" value="butt" checked><span class="choice-icon butt-icon"></span><span><strong>Stumpfnaht</strong><small>I-Stoß mit Kantenversatz, Deck- und Wurzelüberhöhung</small></span></label>
+      </fieldset>
+    </div>
+
+    <div class="general-data-grid">
+      <label>Prüfort<input id="location" placeholder="Werkstatt / Baustelle"></label>
+      <label>Berichtsnummer<input id="report_id" value="EMP-2026-001"></label>
+      <div class="inspector-entry">
+        <label>Prüfer<input id="inspector" placeholder="Name"></label>
+        <button class="optional-data-toggle compact-toggle" type="button" data-optional-panel="inspector-qualification-panel" data-closed-label="+ Qualifikation ergänzen" data-open-label="− Qualifikation schließen" aria-expanded="false">+ Qualifikation ergänzen</button>
+      </div>
+      <label>Prüfdatum<input id="inspection_date" type="date"></label>
+      <label>Bauteil<input id="component" placeholder="z. B. Konsole K-17"></label>
+      <label>WPS-Nr.<input id="wps" placeholder="z. B. WPS-135-FW-S355-08 Rev. 03"></label>
+      <label>Bauteildicke t1<div class="input-unit"><input id="geo-t1" type="number" min="3" max="30" step="0.1" value="10.0"><span>mm</span></div></label>
+      <label>Bauteildicke t2<div class="input-unit"><input id="geo-t2" type="number" min="3" max="30" step="0.1" value="10.0"><span>mm</span></div></label>
+      <label id="general-s-field" class="hidden">Nahtdicke s<div class="input-unit"><input id="geo-s" type="number" min="0.1" step="0.1" value="8.0"><span>mm</span></div></label>
+      <label id="general-misalignment-variant-field" class="hidden">Ausführung für Kantenversatz
+        <select id="misalignment-variant"><option value="5071" selected>5071 – Blech / Längsschweißung</option><option value="5072">5072 – Rohr/Hohlprofil / Umfangsschweißung</option></select>
+      </label>
+      <label id="general-angle-field">Eingeschlossener Bauteilwinkel γ<div class="input-unit"><input id="geo-angle" type="number" min="60" max="120" step="1" value="90"><span>°</span></div></label>
+      <label id="general-a-field">Nenn-Kehlnahtdicke a<div class="input-unit"><input id="geo-a" type="number" min="0.1" step="0.1" value="5.0"><span>mm</span></div></label>
+      <fieldset class="compact-general-field">
+        <legend>SOLL-Bewertungsgruppe</legend>
+        <div class="quality-selector">
+          <label><input type="radio" name="required_quality" value="B" checked><span>B</span></label>
+          <label><input type="radio" name="required_quality" value="C"><span>C</span></label>
+          <label><input type="radio" name="required_quality" value="D"><span>D</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="compact-general-field">
+        <legend>Zugänglichkeit</legend>
+        <label class="switch-row" id="access-face-field"><input id="access_face" type="checkbox" checked><span>Deckseite zugänglich</span></label>
+        <label class="switch-row"><input id="access_root" type="checkbox" checked><span>Wurzelseite zugänglich</span></label>
+      </fieldset>
+    </div>
+
+    <div class="vt-details">
+      <div class="optional-data-actions">
+        <button class="optional-data-toggle secondary" type="button" data-optional-panel="additional-inspection-data-panel" data-closed-label="+ Weitere Prüfdaten" data-open-label="− Weitere Prüfdaten schließen" aria-expanded="false">+ Weitere Prüfdaten</button>
+        <button class="optional-data-toggle secondary" type="button" data-optional-panel="inspection-conditions-panel" data-closed-label="+ Prüfbedingungen und Prüfmittel" data-open-label="− Prüfbedingungen und Prüfmittel schließen" aria-expanded="false">+ Prüfbedingungen und Prüfmittel</button>
+      </div>
+
+      <div class="optional-data-panel" id="inspector-qualification-panel" hidden>
+        <h3>Qualifikation des Prüfers</h3>
+        <div class="optional-field-grid">
+          <label>Qualifikationsstufe<input id="inspector_level" placeholder="z. B. VT 2 oder VT 3"></label>
+          <label>Qualifikationssektor<input id="inspector_sector" placeholder="z. B. Schweißverbindungen"></label>
+          <label>Zertifikatsnummer<input id="inspector_certificate"></label>
+          <label>Gültig bis<input id="inspector_valid_until" type="date"></label>
+        </div>
+      </div>
+
+      <div class="optional-data-panel" id="additional-inspection-data-panel" hidden>
+        <h3>Weitere Prüfdaten</h3>
+        <div class="optional-panel-groups">
+          <fieldset>
+            <legend>Auftrag und Bauteil</legend>
+            <div class="optional-field-grid">
+              <label>Hersteller des Schweißteils<input id="manufacturer"></label>
+              <label>Prüfstelle / Prüforganisation<input id="inspection_organization"></label>
+              <label>Kunde / Auftraggeber<input id="customer"></label>
+              <label>Auftrag / Projekt<input id="project"></label>
+              <label>Bauteilnummer<input id="component_number"></label>
+              <label>Schweißnahtnummer<input id="weld_number"></label>
+              <label>Prüfposition / Messstelle<input id="inspection_position"></label>
+              <label>Zeichnungsnummer<input id="drawing_number"></label>
+              <label>Zeichnungsrevision<input id="drawing_revision"></label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Fertigungsangaben</legend>
+            <div class="optional-field-grid">
+              <label>Werkstoff Bauteil 1<input id="material_t1" placeholder="z. B. S355J2+N"></label>
+              <label>Werkstoff Bauteil 2<input id="material_t2" placeholder="z. B. S355J2+N"></label>
+              <label>Schweißprozess nach DIN EN ISO 4063<input id="welding_process" placeholder="z. B. 135"></label>
+              <label>WPS-Revision<input id="wps_revision"></label>
+              <label>Prüfstadium<select id="inspection_stage"><option value="">Bitte wählen</option><option>fertiggestellt</option><option>nach Reparatur</option><option>nach Wärmebehandlung</option><option>sonstiges</option></select></label>
+              <label>Oberflächenzustand<input id="surface_condition" placeholder="z. B. gereinigt, beschichtet"></label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Dokumentangaben</legend>
+            <div class="optional-field-grid">
+              <label>Berichtsrevision<input id="report_revision"></label>
+              <label>Berichtsdatum<input id="report_date" type="date"></label>
+            </div>
+          </fieldset>
+        </div>
+      </div>
+
+      <div class="optional-data-panel" id="inspection-conditions-panel" hidden>
+        <h3>Prüfbedingungen und Prüfmittel</h3>
+        <div class="optional-panel-groups">
+          <fieldset>
+            <legend>Prüfumfang und Bedingungen</legend>
+            <div class="optional-field-grid">
+              <label>Geprüfte Nahtlänge<div class="input-unit"><input id="inspected_weld_length" type="number" min="0" step="1"><span>mm</span></div></label>
+              <label>Prüfumfang<div class="input-unit"><input id="inspection_scope_percent" type="number" min="0" max="100" step="1"><span>%</span></div></label>
+              <label>Tatsächlich geprüfte Seite<select id="inspected_side"><option value="">Bitte wählen</option><option>Deckseite</option><option>Wurzelseite</option><option>Deck- und Wurzelseite</option></select></label>
+              <label>Art der Sichtprüfung<select id="visual_method"><option value="">Bitte wählen</option><option>direkt</option><option>indirekt</option></select></label>
+              <label>Beleuchtungsstärke<div class="input-unit"><input id="illuminance_lux" type="number" min="0" step="1"><span>lx</span></div></label>
+              <label>Betrachtungsabstand<div class="input-unit"><input id="viewing_distance_mm" type="number" min="0" step="1"><span>mm</span></div></label>
+              <label>Betrachtungswinkel<div class="input-unit"><input id="viewing_angle_deg" type="number" min="0" max="180" step="1"><span>°</span></div></label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Prüfmittel</legend>
+            <div class="optional-field-grid">
+              <label>Verwendetes Prüfmittel<input id="test_equipment" placeholder="z. B. Schweißnahtlehre"></label>
+              <label>Prüfmittel – Hersteller / Typ<input id="equipment_type"></label>
+              <label>Prüfmittel – Geräte- / Seriennummer<input id="equipment_serial"></label>
+              <label>Prüfmittel – Kalibrier- / Prüfdatum<input id="equipment_check_date" type="date"></label>
+              <label>Luxmeter – Hersteller / Typ<input id="luxmeter_type"></label>
+              <label>Luxmeter – Geräte- / Seriennummer<input id="luxmeter_serial"></label>
+            </div>
+          </fieldset>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel step-panel area-2" id="base-geometry" data-panel="2">
+    <div class="section-heading"><div><h2>Messdaten</h2></div></div>
+    <div class="geometry-layout">
+      <div class="geometry-measurements"><div class="form-grid" id="geometry-fields"></div></div>
+      <div class="geometry-card">
+        <div class="schematic" id="geometry-schematic"></div>
+      </div>
+    </div>
+    <div class="vt-details finding-details">
+      <button class="optional-data-toggle secondary" type="button" data-optional-panel="finding-details-panel" data-closed-label="+ Befunddetails" data-open-label="− Befunddetails schließen" aria-expanded="false">+ Befunddetails</button>
+      <div class="optional-data-panel" id="finding-details-panel" hidden>
+        <h3>Befunddetails zur aktuellen Prüfposition</h3>
+        <div class="optional-field-grid">
+          <label>Genaue Lage / Längskoordinate<input id="finding_location" placeholder="z. B. 340–375 mm"></label>
+          <label>Bezugskante / Nullpunkt<input id="finding_reference" placeholder="z. B. Bezugskante A"></label>
+          <label class="wide-field">Befundbeschreibung<textarea id="finding_description" rows="3" maxlength="600"></textarea></label>
+          <label>Foto-, Skizzen- oder Anlagenreferenz<input id="finding_attachment_reference"></label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel step-panel area-3" id="inspection-criteria" data-panel="3">
+    <div class="section-heading"><div><h2>Prüfkriterien</h2></div></div>
+    <div class="criteria-toolbar"><div class="toolbar-actions"></div></div>
+    <div id="criteria-list" class="criteria-list"></div>
+  </section>
+
+  <section class="panel step-panel area-4 evaluation-neutral" id="evaluation-result" data-panel="4">
+    <div class="section-heading"><div><h2>Ergebnis</h2></div></div>
+    <fieldset class="norm-comparison">
+      <legend>Normvergleich</legend>
+      <label class="switch-row"><input id="compare_2014" type="checkbox"><span>Ausgabe 2014 zusätzlich auswerten</span></label>
+      <small>Die Ausgabe 2023 bleibt maßgebend. Bei einem abweichenden Ergebnis wird der Vergleich 2014 unmittelbar am Kriterium hervorgehoben.</small>
+    </fieldset>
+    <div class="result-hero" id="result-summary">
+      <div><h2>Bewertung noch nicht vollständig</h2><p>Die Bewertung aktualisiert sich automatisch nach jeder Eingabe.</p></div>
+    </div>
+    <div id="results-list" class="results-list"></div>
+    <label class="report-notes-input">Bemerkungen
+      <textarea id="report_notes" rows="3" maxlength="600" placeholder="Optionaler Hinweis für den Bericht"></textarea>
+    </label>
+    <div class="result-actions result-actions-bottom"><button class="primary" id="download-pdf" disabled>pdf-Bericht</button></div>
+  </section>
+</main>
+
+<footer class="site-footer"><span id="footer-library">Regelbibliothek wird geladen...</span><span>stumpfnaht.hardt-wiehl.de</span></footer>
+<noscript><div class="alert">JavaScript ist für die lokale Bewertung erforderlich.</div></noscript>
+<script type="module" src="./assets/target-lock.js?v=f0f768a8f797"></script>
+<script type="module" src="./assets/app.js?v=3c5f6e8abdbc"></script>
+<script type="module" src="./assets/criterion-filter.js?v=d6b249169afd"></script>
+</body>
+</html>
