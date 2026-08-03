@@ -1,0 +1,56 @@
+name: Öffentliche Git-Historie einmalig bereinigen
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/purge-public-history.yml
+
+permissions:
+  contents: write
+
+jobs:
+  purge:
+    if: github.repository == 'AndreasHardt/connect-stumpfnaht-website'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Bereinigten Hauptstand vollständig auschecken
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sicherheitsgrenze vor Historienbereinigung prüfen
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f assets/secure-api-client.js
+          test -f build-info.json
+          grep -q '"calculation_location": "protected-cloudflare-worker"' build-info.json
+          for path in             data/rules.v1.json             data/rules.v1.json.gz             data/ui-config.json             assets/engine.js             assets/evaluation.js             assets/geometry.js
+          do
+            test ! -e "$path"
+          done
+
+      - name: Neuen bereinigten Wurzelstand erzeugen und alte Branches entfernen
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Connect Sicherheitsautomatik'
+          git config user.email 'iwe@hardt-wiehl.de'
+
+          git checkout --orphan sanitized-main
+          git rm -rf --cached .
+          rm -f .github/workflows/purge-public-history.yml
+          git add -A
+          git commit -m 'Bereinigter öffentlicher Connect-Webstand ohne Regel- und Berechnungsdaten'
+          git push --force origin HEAD:main
+
+          while IFS= read -r branch
+          do
+            if [ "$branch" != "main" ]; then
+              git push origin --delete "$branch"
+            fi
+          done < <(git ls-remote --heads origin | awk '{sub("refs/heads/", "", $2); print $2}')
